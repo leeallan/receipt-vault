@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ReceiptVault.Views.BudgetPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:ReceiptVault.ViewModels"
+    xmlns:models="clr-namespace:ReceiptVault.Models"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+
+        <BoxView Grid.Row="0" HeightRequest="60" Color="Transparent"/>
+
+        <!-- Header -->
+        <Grid Grid.Row="1" Padding="24,0,24,20" ColumnDefinitions="*,Auto">
+            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                <Label Text="Budget"
+                       FontSize="28" FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextPrimary}"/>
+                <Label Text="{Binding CurrentMonthLabel}"
+                       FontSize="14" TextColor="{StaticResource AppTextSecondary}"/>
+            </VerticalStackLayout>
+            <Button Grid.Column="1"
+                    Text="+ Add"
+                    FontSize="14"
+                    TextColor="White"
+                    BackgroundColor="{StaticResource AppIndigo}"
+                    CornerRadius="12"
+                    Padding="16,0"
+                    HeightRequest="44"
+                    Command="{Binding AddBudgetCommand}"/>
+        </Grid>
+
+        <ScrollView Grid.Row="2">
+            <VerticalStackLayout Padding="24,0,24,40" Spacing="16">
+
+                <!-- Overview card -->
+                <Border BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 20" Padding="20">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Monthly overview"
+                               FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                        <Grid ColumnDefinitions="*,*">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="Spent"
+                                       FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                                <Label Text="{Binding TotalSpent, StringFormat='£{0:F2}'}"
+                                       FontSize="22" FontAttributes="Bold"
+                                       TextColor="{StaticResource AppTextPrimary}"/>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="Budget"
+                                       FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                                <Label Text="{Binding TotalBudget, StringFormat='£{0:F2}'}"
+                                       FontSize="22" FontAttributes="Bold"
+                                       TextColor="{StaticResource AppTextPrimary}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                        <ProgressBar Progress="{Binding TotalProgress}"
+                                     ProgressColor="{StaticResource AppIndigo}"
+                                     BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                     HeightRequest="8"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Budget items -->
+                <CollectionView ItemsSource="{Binding BudgetItems}">
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="12" Margin="0,32,0,0">
+                            <Label Text="💰" FontSize="48" HorizontalOptions="Center"/>
+                            <Label Text="No budgets set"
+                                   FontSize="18" FontAttributes="Bold"
+                                   TextColor="{StaticResource AppTextPrimary}"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="Tap '+ Add' to set a monthly budget"
+                                   FontSize="14" TextColor="{StaticResource AppTextSecondary}"
+                                   HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:BudgetItem">
+                            <SwipeView Margin="0,0,0,12">
+                                <SwipeView.RightItems>
+                                    <SwipeItems>
+                                        <SwipeItem Text="Remove"
+                                                   BackgroundColor="{StaticResource AppError}"
+                                                   Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BudgetViewModel}}, Path=DeleteBudgetCommand}"
+                                                   CommandParameter="{Binding .}"/>
+                                    </SwipeItems>
+                                </SwipeView.RightItems>
+
+                                <Border BackgroundColor="{StaticResource AppSurface}"
+                                        StrokeThickness="1"
+                                        Stroke="{StaticResource AppBorder}"
+                                        StrokeShape="RoundRectangle 16"
+                                        Padding="16">
+                                    <VerticalStackLayout Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding Category}"
+                                                   FontSize="15" FontAttributes="Bold"
+                                                   TextColor="{StaticResource AppTextPrimary}"/>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding SpentAmount, StringFormat='£{0:F2}'}"
+                                                   FontSize="15" FontAttributes="Bold"
+                                                   TextColor="{StaticResource AppTextPrimary}"/>
+                                        </Grid>
+                                        <ProgressBar Progress="{Binding Progress}"
+                                                     ProgressColor="{StaticResource AppIndigo}"
+                                                     BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                                     HeightRequest="6"/>
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding Remaining}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource AppTextSecondary}"/>
+                                            <Label Grid.Column="1"
+                                                   Text="{Binding MonthlyLimit, StringFormat='of £{0:F2}'}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource AppTextSecondary}"/>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </SwipeView>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

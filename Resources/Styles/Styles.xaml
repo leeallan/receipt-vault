@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:conv="clr-namespace:ReceiptVault.Converters">
+
+    <!-- Converters (global) -->
+    <conv:InverseBoolConverter x:Key="InverseBool"/>
+    <conv:CurrencyConverter x:Key="CurrencyConverter"/>
+    <conv:StringNotNullConverter x:Key="StringNotNullConverter"/>
+    <conv:StringNullConverter x:Key="StringNullConverter"/>
+    <conv:EditButtonConverter x:Key="EditButtonConverter"/>
+    <conv:ExpenseTypeConverter x:Key="ExpenseTypeConverter"/>
+
+    <!-- Base controls -->
+    <Style TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource AppMint}"/>
+    </Style>
+
+    <Style TargetType="Border">
+        <Setter Property="Stroke" Value="{StaticResource AppBorder}"/>
+        <Setter Property="StrokeThickness" Value="0"/>
+    </Style>
+
+    <Style TargetType="Button">
+        <Setter Property="TextColor" Value="White"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource AppIndigo}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="HeightRequest" Value="50"/>
+        <Setter Property="Padding" Value="16,0"/>
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal"/>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.8"/>
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Entry">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextMuted}"/>
+        <Setter Property="HeightRequest" Value="48"/>
+        <Setter Property="FontSize" Value="15"/>
+    </Style>
+
+    <Style TargetType="Editor">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextMuted}"/>
+        <Setter Property="FontSize" Value="15"/>
+    </Style>
+
+    <Style TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="FontFamily" Value="OpenSansRegular"/>
+    </Style>
+
+    <Style x:Key="HeadlineLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+    </Style>
+
+    <Style x:Key="SubtitleLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource AppTextSecondary}"/>
+    </Style>
+
+    <Style x:Key="MutedLabel" TargetType="Label">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextColor" Value="{StaticResource AppTextMuted}"/>
+    </Style>
+
+    <Style TargetType="Picker">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="TitleColor" Value="{StaticResource AppTextMuted}"/>
+        <Setter Property="HeightRequest" Value="48"/>
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="HeightRequest" Value="48"/>
+    </Style>
+
+    <Style TargetType="SearchBar">
+        <Setter Property="TextColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="PlaceholderColor" Value="{StaticResource AppTextMuted}"/>
+        <Setter Property="CancelButtonColor" Value="{StaticResource AppTextSecondary}"/>
+    </Style>
+
+    <Style TargetType="Switch">
+        <Setter Property="OnColor" Value="{StaticResource AppIndigo}"/>
+        <Setter Property="ThumbColor" Value="White"/>
+    </Style>
+
+    <Style TargetType="ProgressBar">
+        <Setter Property="ProgressColor" Value="{StaticResource AppIndigo}"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource AppSurfaceVariant}"/>
+    </Style>
+
+    <Style TargetType="RefreshView">
+        <Setter Property="RefreshColor" Value="{StaticResource AppIndigo}"/>
+    </Style>
+
+    <Style TargetType="NavigationPage">
+        <Setter Property="BarBackgroundColor" Value="{StaticResource AppBackground}"/>
+        <Setter Property="BarTextColor" Value="{StaticResource AppTextPrimary}"/>
+    </Style>
+
+    <Style TargetType="Shell" ApplyToDerivedTypes="True">
+        <Setter Property="Shell.BackgroundColor" Value="{StaticResource AppBackground}"/>
+        <Setter Property="Shell.ForegroundColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="Shell.TitleColor" Value="{StaticResource AppTextPrimary}"/>
+        <Setter Property="Shell.DisabledColor" Value="{StaticResource AppTextMuted}"/>
+        <Setter Property="Shell.UnselectedColor" Value="{StaticResource AppTextSecondary}"/>
+        <Setter Property="Shell.NavBarHasShadow" Value="False"/>
+        <Setter Property="Shell.TabBarBackgroundColor" Value="{StaticResource AppSurface}"/>
+        <Setter Property="Shell.TabBarForegroundColor" Value="{StaticResource AppIndigo}"/>
+        <Setter Property="Shell.TabBarUnselectedColor" Value="{StaticResource AppTextSecondary}"/>
+        <Setter Property="Shell.TabBarTitleColor" Value="{StaticResource AppIndigo}"/>
+    </Style>
+
+    <Style TargetType="Page" ApplyToDerivedTypes="True">
+        <Setter Property="BackgroundColor" Value="{StaticResource AppBackground}"/>
+    </Style>
+
+</ResourceDictionary>

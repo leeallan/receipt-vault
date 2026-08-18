@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ReceiptVault.Views.DashboardPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:ReceiptVault.ViewModels"
+    xmlns:models="clr-namespace:ReceiptVault.Models"
+    xmlns:conv="clr-namespace:ReceiptVault.Converters"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}">
+
+    <ContentPage.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter"/>
+        <conv:InverseBoolConverter x:Key="InverseBool"/>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <!-- Safe-area top padding -->
+            <BoxView HeightRequest="60" Color="Transparent"/>
+
+            <!-- Header -->
+            <Grid Padding="24,0,24,16" ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0"
+                       Text="Receipt Vault"
+                       FontSize="28"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextPrimary}"
+                       VerticalOptions="Center"/>
+            </Grid>
+
+            <!-- Month navigator -->
+            <Grid Padding="24,0,24,20" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button Grid.Column="0"
+                        Text="‹"
+                        FontSize="20"
+                        Padding="0"
+                        WidthRequest="40" HeightRequest="40"
+                        CornerRadius="12"
+                        BackgroundColor="{StaticResource AppSurface}"
+                        TextColor="{StaticResource AppTextPrimary}"
+                        Command="{Binding PreviousMonthCommand}"/>
+                <Label Grid.Column="1"
+                       Text="{Binding CurrentMonthLabel}"
+                       FontSize="15"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextSecondary}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"/>
+                <Button Grid.Column="2"
+                        Text="›"
+                        FontSize="20"
+                        Padding="0"
+                        WidthRequest="40" HeightRequest="40"
+                        CornerRadius="12"
+                        BackgroundColor="{StaticResource AppSurface}"
+                        TextColor="{StaticResource AppTextPrimary}"
+                        IsEnabled="{Binding CanGoNext}"
+                        Command="{Binding NextMonthCommand}"/>
+            </Grid>
+
+            <!-- Monthly summary card -->
+            <Border Margin="24,0,24,20"
+                    BackgroundColor="{StaticResource AppIndigo}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20">
+                <Grid Padding="24" RowDefinitions="Auto,24,Auto" RowSpacing="0">
+
+                    <VerticalStackLayout Grid.Row="0" Spacing="4">
+                        <Label Text="{Binding CurrentMonthLabel, StringFormat='Total · {0}'}"
+                               FontSize="13"
+                               TextColor="#CCCCFF"
+                               Opacity="0.8"/>
+                        <Label Text="{Binding MonthlyTotal, StringFormat='£{0:F2}'}"
+                               FontSize="40"
+                               FontAttributes="Bold"
+                               TextColor="White"/>
+                    </VerticalStackLayout>
+
+                    <BoxView Grid.Row="1" HeightRequest="1" Color="Transparent"/>
+
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="16">
+                        <!-- Personal -->
+                        <Border Grid.Column="0"
+                                BackgroundColor="#20FFFFFF"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="16,12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Personal" FontSize="11" TextColor="#CCCCFF" Opacity="0.7"/>
+                                <Label Text="{Binding PersonalTotal, StringFormat='£{0:F2}'}"
+                                       FontSize="18" FontAttributes="Bold" TextColor="White"/>
+                            </VerticalStackLayout>
+                        </Border>
+                        <!-- Business -->
+                        <Border Grid.Column="1"
+                                BackgroundColor="#20FFFFFF"
+                                StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                Padding="16,12">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Business" FontSize="11" TextColor="#CCCCFF" Opacity="0.7"/>
+                                <Label Text="{Binding BusinessTotal, StringFormat='£{0:F2}'}"
+                                       FontSize="18" FontAttributes="Bold" TextColor="White"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </Grid>
+
+                </Grid>
+            </Border>
+
+            <!-- Scan FAB -->
+            <Button Text="  + Scan Receipt"
+                    Margin="24,0,24,28"
+                    HeightRequest="56"
+                    CornerRadius="16"
+                    BackgroundColor="{StaticResource AppMint}"
+                    TextColor="#0D0D1A"
+                    FontAttributes="Bold"
+                    FontSize="16"
+                    Command="{Binding NavigateToCaptureCommand}"/>
+
+            <!-- Recent receipts header -->
+            <Grid Padding="24,0,24,12" ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0"
+                       Text="Recent receipts"
+                       FontSize="17"
+                       FontAttributes="Bold"
+                       TextColor="{StaticResource AppTextPrimary}"/>
+                <Label Grid.Column="1"
+                       Text="{Binding ReceiptCount, StringFormat='{0} total'}"
+                       FontSize="13"
+                       TextColor="{StaticResource AppTextSecondary}"
+                       VerticalOptions="Center"/>
+            </Grid>
+
+            <!-- Recent receipt cards -->
+            <VerticalStackLayout Padding="24,0,24,40" Spacing="10"
+                                 BindableLayout.ItemsSource="{Binding RecentReceipts}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="models:Receipt">
+                        <Border BackgroundColor="{StaticResource AppSurface}"
+                                StrokeThickness="1"
+                                Stroke="{StaticResource AppBorder}"
+                                StrokeShape="RoundRectangle 16"
+                                Padding="16">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, Path=OpenReceiptCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                <!-- Category dot -->
+                                <Border Grid.Column="0"
+                                        WidthRequest="44" HeightRequest="44"
+                                        BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                        StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12">
+                                    <Label Text="{Binding Category}"
+                                           FontSize="10"
+                                           TextColor="{StaticResource AppTextSecondary}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"/>
+                                </Border>
+                                <!-- Merchant + date -->
+                                <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                    <Label Text="{Binding Merchant}"
+                                           FontSize="15"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource AppTextPrimary}"
+                                           LineBreakMode="TailTruncation"/>
+                                    <Label Text="{Binding Date, StringFormat='{0:d MMM yyyy}'}"
+                                           FontSize="12"
+                                           TextColor="{StaticResource AppTextSecondary}"/>
+                                </VerticalStackLayout>
+                                <!-- Total -->
+                                <Label Grid.Column="2"
+                                       Text="{Binding FormattedTotal}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource AppTextPrimary}"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

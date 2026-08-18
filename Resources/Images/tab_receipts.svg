@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Receipt body -->
+  <path d="M5 3C5 2.44772 5.44772 2 6 2H18C18.5523 2 19 2.44772 19 3V22L16.5 20.5L14 22L12 20.5L10 22L7.5 20.5L5 22V3Z" fill="white"/>
+  <!-- Lines on receipt -->
+  <rect x="8" y="7" width="8" height="1.5" rx="0.75" fill="#0D0D1A"/>
+  <rect x="8" y="10.5" width="6" height="1.5" rx="0.75" fill="#0D0D1A"/>
+  <rect x="8" y="14" width="8" height="1.5" rx="0.75" fill="#0D0D1A"/>
+</svg>

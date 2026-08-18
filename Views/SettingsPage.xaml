@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ReceiptVault.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="20">
+
+            <BoxView HeightRequest="52" Color="Transparent"/>
+
+            <Label Text="Settings"
+                   FontSize="28" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextPrimary}"/>
+
+            <!-- Subscription card -->
+            <Border BackgroundColor="{StaticResource AppIndigo}"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    Padding="20">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                            <Label Text="Receipt Vault Premium"
+                                   FontSize="16" FontAttributes="Bold"
+                                   TextColor="White"/>
+                            <Label Text="{Binding SubscriptionLabel}"
+                                   FontSize="13"
+                                   TextColor="#CCCCFF"/>
+                        </VerticalStackLayout>
+                        <Label Grid.Column="1"
+                               Text="⭐"
+                               FontSize="32"
+                               VerticalOptions="Center"/>
+                    </Grid>
+                    <Button IsVisible="{Binding IsPremium, Converter={StaticResource InverseBool}}"
+                            Text="Upgrade — £2.99/month"
+                            BackgroundColor="White"
+                            TextColor="{StaticResource AppIndigo}"
+                            FontAttributes="Bold"
+                            CornerRadius="12"
+                            HeightRequest="48"
+                            Command="{Binding UpgradeCommand}"/>
+                    <Button IsVisible="{Binding IsPremium, Converter={StaticResource InverseBool}}"
+                            Text="Restore purchases"
+                            BackgroundColor="Transparent"
+                            TextColor="#CCCCFF"
+                            FontSize="13"
+                            HeightRequest="36"
+                            Command="{Binding RestorePurchasesCommand}"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Export section -->
+            <Label Text="Export"
+                   FontSize="13" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextSecondary}"
+                   Margin="0,4,0,-8"/>
+
+            <Border BackgroundColor="{StaticResource AppSurface}"
+                    StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                    StrokeShape="RoundRectangle 16">
+                <VerticalStackLayout>
+                    <Button Text="Export this month to CSV"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource AppTextPrimary}"
+                            HorizontalOptions="Fill"
+                            HeightRequest="52"
+                            Command="{Binding ExportMonthCommand}"/>
+                    <BoxView HeightRequest="1" Color="{StaticResource AppBorder}" Margin="16,0"/>
+                    <Button Text="Export all receipts to CSV"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource AppTextPrimary}"
+                            HorizontalOptions="Fill"
+                            HeightRequest="52"
+                            Command="{Binding ExportAllCommand}"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Preferences -->
+            <Label Text="Preferences"
+                   FontSize="13" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextSecondary}"
+                   Margin="0,4,0,-8"/>
+
+            <Border BackgroundColor="{StaticResource AppSurface}"
+                    StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                    StrokeShape="RoundRectangle 16" Padding="16">
+                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <Label Grid.Column="0"
+                           Text="Default currency"
+                           FontSize="15"
+                           TextColor="{StaticResource AppTextPrimary}"
+                           VerticalOptions="Center"/>
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding Currencies}"
+                            SelectedItem="{Binding SelectedCurrency}"
+                            TextColor="{StaticResource AppTextPrimary}"
+                            WidthRequest="90"
+                            HorizontalOptions="End"/>
+                </Grid>
+            </Border>
+
+            <!-- About -->
+            <Label Text="About"
+                   FontSize="13" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextSecondary}"
+                   Margin="0,4,0,-8"/>
+
+            <Border BackgroundColor="{StaticResource AppSurface}"
+                    StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                    StrokeShape="RoundRectangle 16" Padding="20">
+                <VerticalStackLayout Spacing="6">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Receipt Vault"
+                               FontSize="15" TextColor="{StaticResource AppTextPrimary}"/>
+                        <Label Grid.Column="1" Text="v1.0"
+                               FontSize="14" TextColor="{StaticResource AppTextSecondary}"/>
+                    </Grid>
+                    <Label Text="Snap, tag and export your receipts. No account required."
+                           FontSize="13"
+                           TextColor="{StaticResource AppTextSecondary}"/>
+                </VerticalStackLayout>
+            </Border>
+
+            <BoxView HeightRequest="40" Color="Transparent"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

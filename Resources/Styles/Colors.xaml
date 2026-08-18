@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Brand -->
+    <Color x:Key="AppIndigo">#6C63FF</Color>
+    <Color x:Key="AppIndigoLight">#8B85FF</Color>
+    <Color x:Key="AppIndigoDark">#4A42D4</Color>
+    <Color x:Key="AppMint">#12D4A0</Color>
+    <Color x:Key="AppMintLight">#3DE0B4</Color>
+
+    <!-- Backgrounds (dark-first) -->
+    <Color x:Key="AppBackground">#0D0D1A</Color>
+    <Color x:Key="AppSurface">#131323</Color>
+    <Color x:Key="AppSurfaceVariant">#1C1C2E</Color>
+    <Color x:Key="AppSurfaceElevated">#232338</Color>
+
+    <!-- Text -->
+    <Color x:Key="AppTextPrimary">#F0F0FF</Color>
+    <Color x:Key="AppTextSecondary">#9090B0</Color>
+    <Color x:Key="AppTextMuted">#5A5A78</Color>
+
+    <!-- Borders -->
+    <Color x:Key="AppBorder">#2A2A42</Color>
+    <Color x:Key="AppBorderLight">#3A3A55</Color>
+
+    <!-- Semantic -->
+    <Color x:Key="AppSuccess">#12D4A0</Color>
+    <Color x:Key="AppWarning">#FFB347</Color>
+    <Color x:Key="AppError">#FF6B6B</Color>
+    <Color x:Key="AppInfo">#6C63FF</Color>
+
+    <!-- Category colours -->
+    <Color x:Key="CatGroceries">#FF7B7B</Color>
+    <Color x:Key="CatDining">#FF9F43</Color>
+    <Color x:Key="CatTransport">#54A0FF</Color>
+    <Color x:Key="CatEntertainment">#5F27CD</Color>
+    <Color x:Key="CatHealth">#01CBC6</Color>
+    <Color x:Key="CatShopping">#FF6CAE</Color>
+    <Color x:Key="CatBusiness">#6C63FF</Color>
+    <Color x:Key="CatOther">#9090B0</Color>
+
+    <!-- Legacy compatibility (keep for default MAUI styles) -->
+    <Color x:Key="Primary">#6C63FF</Color>
+    <Color x:Key="PrimaryDark">#8B85FF</Color>
+    <Color x:Key="PrimaryDarkText">#F0F0FF</Color>
+    <Color x:Key="Secondary">#12D4A0</Color>
+    <Color x:Key="SecondaryDarkText">#0D0D1A</Color>
+    <Color x:Key="Tertiary">#4A42D4</Color>
+    <Color x:Key="White">#F0F0FF</Color>
+    <Color x:Key="Black">#0D0D1A</Color>
+    <Color x:Key="Gray100">#E8E8F2</Color>
+    <Color x:Key="Gray200">#C8C8DC</Color>
+    <Color x:Key="Gray300">#9090B0</Color>
+    <Color x:Key="Gray400">#6A6A88</Color>
+    <Color x:Key="Gray500">#5A5A78</Color>
+    <Color x:Key="Gray600">#3A3A55</Color>
+    <Color x:Key="Gray900">#1C1C2E</Color>
+    <Color x:Key="Gray950">#131323</Color>
+    <Color x:Key="OffBlack">#0D0D1A</Color>
+
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource AppIndigo}"/>
+    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource AppMint}"/>
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackground}"/>
+    <SolidColorBrush x:Key="AppSurfaceBrush" Color="{StaticResource AppSurface}"/>
+
+</ResourceDictionary>

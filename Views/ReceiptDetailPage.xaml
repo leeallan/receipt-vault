@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ReceiptVault.Views.ReceiptDetailPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:ReceiptVault.ViewModels"
+    xmlns:conv="clr-namespace:ReceiptVault.Converters"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}">
+
+    <ContentPage.Resources>
+        <conv:InverseBoolConverter x:Key="InverseBool"/>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Top nav -->
+        <Grid Grid.Row="0" Padding="24,60,24,16" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+            <Button Grid.Column="0"
+                    Text="←"
+                    FontSize="20"
+                    TextColor="{StaticResource AppTextSecondary}"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    CornerRadius="12"
+                    WidthRequest="44" HeightRequest="44"
+                    Padding="0"
+                    Clicked="OnBackClicked"/>
+            <Label Grid.Column="1"
+                   Text="{Binding Merchant}"
+                   FontSize="18" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextPrimary}"
+                   VerticalOptions="Center"
+                   LineBreakMode="TailTruncation"/>
+            <Button Grid.Column="2"
+                    Text="{Binding IsEditing, Converter={StaticResource EditButtonConverter}}"
+                    FontSize="14"
+                    TextColor="{StaticResource AppIndigo}"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    CornerRadius="12"
+                    Padding="12,0"
+                    HeightRequest="44"
+                    Command="{Binding ToggleEditCommand}"/>
+        </Grid>
+
+        <!-- Content -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24,0,24,24" Spacing="16">
+
+                <!-- Receipt image -->
+                <Border IsVisible="{Binding Receipt.ImagePath, Converter={StaticResource StringNotNullConverter}}"
+                        HeightRequest="200"
+                        BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 16">
+                    <Image Source="{Binding Receipt.ImagePath}" Aspect="AspectFill"/>
+                </Border>
+
+                <!-- Summary card -->
+                <Border BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 16" Padding="20">
+                    <Grid RowDefinitions="Auto,1,Auto" RowSpacing="16">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Total"
+                                   FontSize="14" TextColor="{StaticResource AppTextSecondary}"/>
+                            <Label Grid.Column="1"
+                                   Text="{Binding Receipt.FormattedTotal}"
+                                   FontSize="28" FontAttributes="Bold"
+                                   TextColor="{StaticResource AppTextPrimary}"/>
+                        </Grid>
+                        <BoxView Grid.Row="1" HeightRequest="1" Color="{StaticResource AppBorder}"/>
+                        <Grid Grid.Row="2" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="12">
+                            <VerticalStackLayout Grid.Column="0" Grid.Row="0" Spacing="2">
+                                <Label Text="Date" FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                                <Label Text="{Binding Date, StringFormat='{0:d MMM yyyy}'}"
+                                       FontSize="14" TextColor="{StaticResource AppTextPrimary}"/>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Grid.Row="0" Spacing="2">
+                                <Label Text="Category" FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                                <Label Text="{Binding SelectedCategory}"
+                                       FontSize="14" TextColor="{StaticResource AppTextPrimary}"/>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="0" Grid.Row="1" Spacing="2">
+                                <Label Text="Type" FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                                <Label Text="{Binding IsBusinessExpense, Converter={StaticResource ExpenseTypeConverter}}"
+                                       FontSize="14" TextColor="{StaticResource AppTextPrimary}"/>
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Edit form (visible when editing) -->
+                <VerticalStackLayout IsVisible="{Binding IsEditing}" Spacing="12">
+
+                    <Label Text="Merchant" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="4,0">
+                        <Entry Text="{Binding Merchant}"
+                               TextColor="{StaticResource AppTextPrimary}"
+                               PlaceholderColor="{StaticResource AppTextMuted}"/>
+                    </Border>
+
+                    <Label Text="Total (£)" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="4,0">
+                        <Entry Text="{Binding TotalText}" Keyboard="Numeric"
+                               TextColor="{StaticResource AppTextPrimary}"/>
+                    </Border>
+
+                    <Label Text="Date" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="16,0">
+                        <DatePicker Date="{Binding Date}"
+                                    TextColor="{StaticResource AppTextPrimary}"
+                                    Format="d MMM yyyy"/>
+                    </Border>
+
+                    <Label Text="Category" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="16,0">
+                        <Picker ItemsSource="{Binding Categories}"
+                                SelectedItem="{Binding SelectedCategory}"
+                                TextColor="{StaticResource AppTextPrimary}"/>
+                    </Border>
+
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 14" Padding="16">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Business expense"
+                                   FontSize="15" TextColor="{StaticResource AppTextPrimary}"
+                                   VerticalOptions="Center"/>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding IsBusinessExpense}"
+                                    OnColor="{StaticResource AppIndigo}"/>
+                        </Grid>
+                    </Border>
+
+                    <Label Text="Notes" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="4,0">
+                        <Editor Text="{Binding Notes}"
+                                Placeholder="Add notes…"
+                                AutoSize="TextChanges"
+                                PlaceholderColor="{StaticResource AppTextMuted}"
+                                TextColor="{StaticResource AppTextPrimary}"
+                                MinimumHeightRequest="60"/>
+                    </Border>
+
+                    <Button Text="Save changes"
+                            BackgroundColor="{StaticResource AppIndigo}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="14"
+                            HeightRequest="52"
+                            Command="{Binding SaveCommand}"/>
+                </VerticalStackLayout>
+
+                <!-- Notes display (read-only) -->
+                <Border IsVisible="{Binding IsEditing, Converter={StaticResource InverseBool}}"
+                        BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 16" Padding="20">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Notes" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                        <Label Text="{Binding Notes}"
+                               FontSize="14"
+                               TextColor="{StaticResource AppTextPrimary}"/>
+                        <Label IsVisible="{Binding Notes, Converter={StaticResource StringNullConverter}}"
+                               Text="No notes"
+                               FontSize="14"
+                               TextColor="{StaticResource AppTextMuted}"/>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Bottom actions -->
+        <Grid Grid.Row="2" Padding="24,12,24,40"
+              ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+            <Button Grid.Column="0"
+                    Text="Share / Export"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    TextColor="{StaticResource AppTextPrimary}"
+                    CornerRadius="14"
+                    HeightRequest="52"
+                    Command="{Binding ShareReceiptCommand}"/>
+            <Button Grid.Column="1"
+                    Text="🗑"
+                    FontSize="18"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    TextColor="{StaticResource AppError}"
+                    CornerRadius="14"
+                    WidthRequest="52" HeightRequest="52"
+                    Padding="0"
+                    Command="{Binding DeleteCommand}"/>
+        </Grid>
+
+    </Grid>
+</ContentPage>

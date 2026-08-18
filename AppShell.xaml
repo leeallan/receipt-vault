@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="ReceiptVault.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:ReceiptVault.Views"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}"
+    Shell.TabBarBackgroundColor="{StaticResource AppSurface}"
+    Shell.TabBarForegroundColor="{StaticResource AppIndigo}"
+    Shell.TabBarUnselectedColor="{StaticResource AppTextSecondary}"
+    Shell.TabBarTitleColor="{StaticResource AppIndigo}">
+
+    <TabBar>
+
+        <Tab Title="Dashboard" Icon="tab_dashboard.svg">
+            <ShellContent
+                Route="DashboardPage"
+                ContentTemplate="{DataTemplate views:DashboardPage}" />
+        </Tab>
+
+        <Tab Title="Receipts" Icon="tab_receipts.svg">
+            <ShellContent
+                Route="ReceiptsListPage"
+                ContentTemplate="{DataTemplate views:ReceiptsListPage}" />
+        </Tab>
+
+        <Tab Title="Budget" Icon="tab_budget.svg">
+            <ShellContent
+                Route="BudgetPage"
+                ContentTemplate="{DataTemplate views:BudgetPage}" />
+        </Tab>
+
+        <Tab Title="Settings" Icon="tab_settings.svg">
+            <ShellContent
+                Route="SettingsPage"
+                ContentTemplate="{DataTemplate views:SettingsPage}" />
+        </Tab>
+
+    </TabBar>
+
+</Shell>

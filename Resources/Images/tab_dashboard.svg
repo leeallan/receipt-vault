@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Top-left tile -->
+  <rect x="3" y="3" width="8" height="8" rx="2" fill="white"/>
+  <!-- Top-right tile -->
+  <rect x="13" y="3" width="8" height="8" rx="2" fill="white"/>
+  <!-- Bottom-left tile -->
+  <rect x="3" y="13" width="8" height="8" rx="2" fill="white"/>
+  <!-- Bottom-right tile (smaller accent) -->
+  <rect x="13" y="13" width="8" height="8" rx="2" fill="white" opacity="0.5"/>
+</svg>
