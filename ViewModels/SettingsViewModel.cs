@@ -7,7 +7,8 @@ namespace ReceiptVault.ViewModels;
 public partial class SettingsViewModel(
     IReceiptService receiptService,
     IExportService exportService,
-    ISubscriptionService subscriptionService) : BaseViewModel
+    ISubscriptionService subscriptionService,
+    IBillingService billingService) : BaseViewModel
 {
     [ObservableProperty] private bool isPremium;
     [ObservableProperty] private int receiptCount;
@@ -71,21 +72,57 @@ public partial class SettingsViewModel(
         });
     }
 
+    // Interim purchase flow: pick a plan from an action sheet, then buy. Phase 5 replaces
+    // this with a dedicated tiered paywall screen; the billing plumbing stays the same.
     [RelayCommand]
     private async Task UpgradeAsync()
     {
-        // TODO (Phase 2/5): open the tiered paywall + StoreKit / Play Billing purchase.
-        await Shell.Current.DisplayAlertAsync(
-            "Receipt Vault Premium",
-            "Cloud sync, PDF & tax reports, and automatic line-item scanning.\n\n" +
-            "Monthly £2.99 · Annual £19.99 · Lifetime £39.99\n\nIn-app purchase coming soon.",
-            "OK");
+        await RunAsync(async () =>
+        {
+            var products = await billingService.GetProductsAsync();
+            if (products.Count == 0)
+            {
+                await Shell.Current.DisplayAlertAsync(
+                    "Store unavailable",
+                    "Couldn't load the plans right now. Please try again later.",
+                    "OK");
+                return;
+            }
+
+            var buttons = products.Select(p => $"{p.Title} — {p.LocalizedPrice}").ToArray();
+            var choice = await Shell.Current.DisplayActionSheetAsync(
+                "Choose your plan", "Cancel", null, buttons);
+            if (string.IsNullOrEmpty(choice) || choice == "Cancel") return;
+
+            var selected = products.FirstOrDefault(p => $"{p.Title} — {p.LocalizedPrice}" == choice);
+            if (selected is null) return;
+
+            var result = await billingService.PurchaseAsync(selected.ProductId);
+            await LoadAsync();
+
+            if (result.Success)
+                await Shell.Current.DisplayAlertAsync(
+                    "Welcome to Premium", "Thanks! Your premium features are now unlocked.", "OK");
+            else if (!result.Cancelled)
+                await Shell.Current.DisplayAlertAsync(
+                    "Purchase failed", result.Error ?? "Please try again.", "OK");
+        });
     }
 
     [RelayCommand]
     private async Task RestorePurchasesAsync()
     {
-        await subscriptionService.RestorePurchasesAsync();
-        await LoadAsync();
+        await RunAsync(async () =>
+        {
+            var tier = await billingService.RestoreAsync();
+            await LoadAsync();
+
+            await Shell.Current.DisplayAlertAsync(
+                "Restore purchases",
+                tier == Models.ProductTier.Free
+                    ? "No previous purchases were found for this account."
+                    : $"Restored your {tier} plan.",
+                "OK");
+        });
     }
 }

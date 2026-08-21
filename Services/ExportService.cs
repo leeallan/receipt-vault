@@ -10,48 +10,61 @@ public class ExportService : IExportService
     {
         var ordered = receipts.OrderByDescending(r => r.Date).ToList();
 
+        // Single table: each receipt is a "Receipt" row immediately followed by its "Item"
+        // rows. ReceiptId links them so the file stays correct if re-sorted in a spreadsheet;
+        // item rows repeat Date/Merchant/Category/Expense for filtering and pivots, but leave
+        // Total/Tax blank so summing the Total column never double-counts.
         var sb = new StringBuilder();
-        sb.AppendLine("Date,Merchant,Total,Currency,Category,Type,Tax,Tags,Notes");
+        sb.AppendLine("ReceiptId,RowType,Date,Merchant,Category,Expense,Item,Qty,Price,Saving,Total,Tax,Currency,Tags,Notes");
 
         foreach (var r in ordered)
         {
+            var items = lineItems is not null && lineItems.TryGetValue(r.Id, out var found)
+                ? found
+                : [];
+
+            var expense = r.IsBusinessExpense ? "Business" : "Personal";
+            var receiptSavings = items.Sum(i => i.Savings);
+
+            // Receipt summary row.
             sb.AppendLine(string.Join(",",
+                r.Id,
+                "Receipt",
                 r.Date.ToString("yyyy-MM-dd"),
                 QuoteCsv(r.Merchant),
-                r.Total.ToString("F2"),
-                r.Currency,
                 QuoteCsv(r.Category),
-                r.IsBusinessExpense ? "Business" : "Personal",
+                expense,
+                "",                                             // Item
+                "",                                             // Qty
+                "",                                             // Price
+                receiptSavings > 0 ? receiptSavings.ToString("F2") : "", // Saving (receipt total)
+                r.Total.ToString("F2"),
                 r.Tax?.ToString("F2") ?? "",
+                r.Currency,
                 QuoteCsv(r.Tags ?? ""),
                 QuoteCsv(r.Notes ?? "")
             ));
-        }
 
-        // Second section: itemised lines, one row per purchased item.
-        if (lineItems is not null && lineItems.Values.Any(v => v.Count > 0))
-        {
-            sb.AppendLine();
-            sb.AppendLine("Receipt Items");
-            sb.AppendLine("Date,Merchant,Item,Quantity,Price,Saving,Currency");
-
-            foreach (var r in ordered)
+            // One row per purchased sub-item.
+            foreach (var item in items)
             {
-                if (!lineItems.TryGetValue(r.Id, out var items) || items.Count == 0)
-                    continue;
-
-                foreach (var item in items)
-                {
-                    sb.AppendLine(string.Join(",",
-                        r.Date.ToString("yyyy-MM-dd"),
-                        QuoteCsv(r.Merchant),
-                        QuoteCsv(item.Description),
-                        item.Quantity.ToString("0.##"),
-                        item.Price.ToString("F2"),
-                        item.Savings.ToString("F2"),
-                        r.Currency
-                    ));
-                }
+                sb.AppendLine(string.Join(",",
+                    r.Id,
+                    "Item",
+                    r.Date.ToString("yyyy-MM-dd"),
+                    QuoteCsv(r.Merchant),
+                    QuoteCsv(r.Category),
+                    expense,
+                    QuoteCsv(item.Description),
+                    item.Quantity.ToString("0.##"),
+                    item.Price.ToString("F2"),
+                    item.Savings.ToString("F2"),
+                    "",                                         // Total (receipt-level only)
+                    "",                                         // Tax (receipt-level only)
+                    r.Currency,
+                    "",                                         // Tags
+                    ""                                          // Notes
+                ));
             }
         }
 

@@ -25,6 +25,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IReceiptService, ReceiptService>();
         builder.Services.AddSingleton<IExportService, ExportService>();
         builder.Services.AddSingleton<ISubscriptionService, SubscriptionService>();
+        builder.Services.AddSingleton<IBillingService, BillingService>();
         builder.Services.AddSingleton<IOcrService, OcrService>();
 
         // ViewModels
