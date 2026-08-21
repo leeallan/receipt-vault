@@ -113,8 +113,9 @@ public partial class ReceiptDetailViewModel(
     {
         if (Receipt is null) return;
 
+        var items = new Dictionary<int, List<LineItem>> { [Receipt.Id] = [.. LineItems] };
         var filePath = await exportService.ExportToCsvAsync(
-            [Receipt], $"receipt_{Receipt.Date:yyyy-MM-dd}_{Receipt.Merchant}");
+            [Receipt], $"receipt_{Receipt.Date:yyyy-MM-dd}_{Receipt.Merchant}", items);
         await exportService.ShareFileAsync(filePath);
     }
 }

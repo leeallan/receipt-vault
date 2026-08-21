@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     x:Class="ReceiptVault.Views.ReceiptDetailPage"
+    x:Name="Page"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:ReceiptVault.ViewModels"
     xmlns:conv="clr-namespace:ReceiptVault.Converters"
+    xmlns:models="clr-namespace:ReceiptVault.Models"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{StaticResource AppBackground}">
 
@@ -89,6 +91,51 @@
                     </Grid>
                 </Border>
 
+                <!-- Items (read-only) -->
+                <Border BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 16" Padding="20">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsEditing}" Value="True">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding HasLineItems}" Value="False">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Items" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding LineItems}" Spacing="10">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="models:LineItem">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                            <Label FontSize="15" TextColor="{StaticResource AppTextPrimary}">
+                                                <Label.FormattedText>
+                                                    <FormattedString>
+                                                        <Span Text="{Binding QuantityPrefix}"
+                                                              TextColor="{StaticResource AppTextSecondary}"/>
+                                                        <Span Text="{Binding Description}"/>
+                                                    </FormattedString>
+                                                </Label.FormattedText>
+                                            </Label>
+                                            <Label Text="{Binding FormattedSavings}"
+                                                   IsVisible="{Binding HasSavings}"
+                                                   FontSize="12"
+                                                   TextColor="{StaticResource AppMint}"/>
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="1"
+                                               Text="{Binding FormattedPrice}"
+                                               FontSize="15"
+                                               TextColor="{StaticResource AppTextPrimary}"
+                                               VerticalOptions="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
                 <!-- Edit form (visible when editing) -->
                 <VerticalStackLayout IsVisible="{Binding IsEditing}" Spacing="12">
 
@@ -151,6 +198,68 @@
                                 TextColor="{StaticResource AppTextPrimary}"
                                 MinimumHeightRequest="60"/>
                     </Border>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                        <Label Grid.Column="0" Text="Items" FontSize="13"
+                               TextColor="{StaticResource AppTextSecondary}"
+                               VerticalOptions="Center"/>
+                        <Button Grid.Column="1"
+                                Text="＋ Add item"
+                                FontSize="13"
+                                Padding="12,0"
+                                HeightRequest="36"
+                                BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                TextColor="{StaticResource AppMint}"
+                                CornerRadius="10"
+                                Command="{Binding AddLineItemCommand}"/>
+                    </Grid>
+
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding LineItems}" Spacing="8">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="models:LineItem">
+                                <Border BackgroundColor="{StaticResource AppSurface}"
+                                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                                        StrokeShape="RoundRectangle 12" Padding="12">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                            <Entry Grid.Column="0"
+                                                   Text="{Binding Description}"
+                                                   Placeholder="Item description"
+                                                   TextColor="{StaticResource AppTextPrimary}"
+                                                   PlaceholderColor="{StaticResource AppTextMuted}"/>
+                                            <Button Grid.Column="1"
+                                                    Text="✕"
+                                                    FontSize="14"
+                                                    WidthRequest="36" HeightRequest="36"
+                                                    Padding="0"
+                                                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                                    TextColor="{StaticResource AppError}"
+                                                    CornerRadius="10"
+                                                    Command="{Binding Source={x:Reference Page}, Path=BindingContext.RemoveLineItemCommand}"
+                                                    CommandParameter="{Binding .}"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                <Label Text="Qty" FontSize="11" TextColor="{StaticResource AppTextMuted}"/>
+                                                <Entry Text="{Binding Quantity}" Keyboard="Numeric"
+                                                       TextColor="{StaticResource AppTextPrimary}"/>
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <Label Text="Price" FontSize="11" TextColor="{StaticResource AppTextMuted}"/>
+                                                <Entry Text="{Binding Price}" Keyboard="Numeric"
+                                                       TextColor="{StaticResource AppTextPrimary}"/>
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="2" Spacing="2">
+                                                <Label Text="Saving" FontSize="11" TextColor="{StaticResource AppTextMuted}"/>
+                                                <Entry Text="{Binding Savings}" Keyboard="Numeric"
+                                                       TextColor="{StaticResource AppTextPrimary}"/>
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </VerticalStackLayout>
 
                     <Button Text="Save changes"
                             BackgroundColor="{StaticResource AppIndigo}"

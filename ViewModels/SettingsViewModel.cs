@@ -43,7 +43,8 @@ public partial class SettingsViewModel(
                 return;
             }
             var fileName = $"receipts_export_{DateTime.Today:yyyy-MM-dd}";
-            var path = await exportService.ExportToCsvAsync(all, fileName);
+            var items = await receiptService.GetAllLineItemsAsync();
+            var path = await exportService.ExportToCsvAsync(all, fileName, items);
             await exportService.ShareFileAsync(path);
         });
     }
@@ -61,7 +62,11 @@ public partial class SettingsViewModel(
                 return;
             }
             var fileName = $"receipts_{now:yyyy-MM}";
-            var path = await exportService.ExportToCsvAsync(monthly, fileName);
+            var allItems = await receiptService.GetAllLineItemsAsync();
+            var items = allItems
+                .Where(kv => monthly.Any(r => r.Id == kv.Key))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+            var path = await exportService.ExportToCsvAsync(monthly, fileName, items);
             await exportService.ShareFileAsync(path);
         });
     }

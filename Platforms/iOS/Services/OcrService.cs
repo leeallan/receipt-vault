@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using CoreGraphics;
 using Foundation;
 using UIKit;
 using Vision;
@@ -25,14 +26,55 @@ public class OcrService : IOcrService
 
             if (error is not null || request.Results is null) return new OcrResult();
 
-            var lines = request.Results
+            var observations = request.Results
                 .OfType<VNRecognizedTextObservation>()
-                .Select(obs => obs.TopCandidates(1).FirstOrDefault()?.String ?? "")
-                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(obs => (
+                    Text: obs.TopCandidates(1).FirstOrDefault()?.String ?? "",
+                    Box: obs.BoundingBox))
+                .Where(o => !string.IsNullOrWhiteSpace(o.Text))
                 .ToList();
+
+            // Vision returns one observation per text run, so a multi-column receipt
+            // (description on the left, price on the right) arrives as separate runs.
+            // Regroup them into visual rows by vertical position before parsing.
+            var lines = GroupIntoRows(observations);
 
             return ParseReceipt(lines);
         });
+    }
+
+    // Stitches text runs that share a horizontal band back into single logical rows,
+    // ordered left-to-right, so column-split receipts read like "DESCRIPTION ... PRICE".
+    private static List<string> GroupIntoRows(List<(string Text, CGRect Box)> observations)
+    {
+        if (observations.Count == 0) return [];
+
+        // BoundingBox is normalised (0–1) with the origin at the bottom-left, so a
+        // larger Y is nearer the top of the receipt.
+        static double MidY((string Text, CGRect Box) o) => o.Box.Y + o.Box.Height / 2.0;
+
+        var avgHeight = observations.Average(o => (double)o.Box.Height);
+        var threshold = Math.Max(avgHeight * 0.6, 0.004);
+
+        var rows = new List<List<(string Text, CGRect Box)>>();
+        foreach (var token in observations.OrderByDescending(MidY))
+        {
+            var y = MidY(token);
+            var row = rows.FirstOrDefault(r => Math.Abs(r.Average(MidY) - y) < threshold);
+            if (row is null)
+            {
+                row = [];
+                rows.Add(row);
+            }
+            row.Add(token);
+        }
+
+        return rows
+            .Select(r => string.Join(" ", r
+                .OrderBy(t => (double)t.Box.X)
+                .Select(t => t.Text.Trim())))
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .ToList();
     }
 
     private static OcrResult ParseReceipt(List<string> lines)
@@ -114,7 +156,9 @@ public class OcrService : IOcrService
     private const string MetaKeywords =
         @"\b(sub[\s\-]?total|total|amount|balance|to pay|change|cash|card|tender|visa|mastercard|" +
         @"contactless|debit|credit|vat|tax|gst|receipt|thank|www|http|tel|phone|till|cashier|" +
-        @"store|points|nectar points|aid|auth|approved|reference|invoice|order|table|server)\b";
+        @"store|points|nectar points|aid|auth|approved|reference|invoice|order|table|server|" +
+        @"items|net|goods|source|sale|verification|authorisation|authorization|eft|terminal|" +
+        @"merchant|gbp|usd|eur|change due)\b";
 
     // Lines that describe a discount / saving applied to the previous item or the basket.
     private const string SavingsKeywords =
@@ -134,48 +178,68 @@ public class OcrService : IOcrService
             if (Regex.IsMatch(line, MetaKeywords, RegexOptions.IgnoreCase))
                 continue;
 
+            // Leading quantity marker ("2 x", "2 X"), which supermarkets print before the
+            // product code / description.
+            decimal quantity = 1;
+            var qm = Regex.Match(line, @"^(?<qty>\d{1,3})\s*[xX@]\s+");
+            if (qm.Success && decimal.TryParse(qm.Groups["qty"].Value, out var q) && q > 0)
+            {
+                quantity = q;
+                line = line[qm.Length..].Trim();
+            }
+
+            // Strip a leading product/PLU code (e.g. Aldi's "286117 WHISKEY BOURBON").
+            // Its presence is a strong signal the row is a purchased item.
+            var hasCode = false;
+            var codeMatch = Regex.Match(line, @"^(?<code>\d{4,7})\s+(?=\S*[A-Za-z])");
+            if (codeMatch.Success)
+            {
+                hasCode = true;
+                line = line[codeMatch.Length..].Trim();
+            }
+
             // Trailing money amount, optionally negative / parenthesised, with an optional
             // trailing tax-code letter or asterisk (e.g. "1.99 A", "2.50*").
             var m = Regex.Match(line,
                 @"^(?<desc>.*?)[\s]*(?<neg>[-(])?\s*[£$€]?\s*(?<amt>\d{1,4}[.,]\d{2})\s*(?<neg2>[-)])?\s*[A-Za-z*]?\s*$");
-            if (!m.Success) continue;
 
-            var desc = m.Groups["desc"].Value.Trim(' ', '-', '.', '·', '*', ':');
+            decimal? amount = null;
+            var desc = line;
+            var isNegative = false;
+
+            if (m.Success && decimal.TryParse(m.Groups["amt"].Value.Replace(",", "."),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+            {
+                amount = parsed;
+                desc = m.Groups["desc"].Value;
+                isNegative = m.Groups["neg"].Success || m.Groups["neg2"].Success;
+            }
+
+            desc = desc.Trim(' ', '-', '.', '·', '*', ':');
             if (!Regex.IsMatch(desc, "[A-Za-z]{2,}")) continue; // need a real description
 
-            if (!decimal.TryParse(m.Groups["amt"].Value.Replace(",", "."),
-                System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var amount))
-                continue;
-
-            var isNegative = m.Groups["neg"].Success || m.Groups["neg2"].Success;
-            var isSaving = isNegative || Regex.IsMatch(line, SavingsKeywords, RegexOptions.IgnoreCase);
+            var isSaving = amount is not null &&
+                (isNegative || Regex.IsMatch(line, SavingsKeywords, RegexOptions.IgnoreCase));
 
             if (isSaving)
             {
                 // Attach the saving to the most recent item; otherwise skip a basket-level saving
                 // that has no item to hang it on.
                 if (items.Count > 0)
-                    items[^1].Savings += Math.Abs(amount);
+                    items[^1].Savings += Math.Abs(amount!.Value);
                 continue;
             }
 
-            // Quantity: "2 x", "2x", "3 @ 0.99" style prefixes.
-            decimal quantity = 1;
-            var qm = Regex.Match(desc, @"^(?<qty>\d{1,3})\s*[xX@]\s*");
-            if (qm.Success && decimal.TryParse(qm.Groups["qty"].Value, out var q) && q > 0)
-            {
-                quantity = q;
-                desc = desc[qm.Length..].Trim(' ', '-', '·', '@', 'x', 'X');
-            }
-
-            if (desc.Length < 2) continue;
+            // Rows with no price only count as items when a product code marks them as such —
+            // the price likely landed in a separate column the user can fill in.
+            if (amount is null && !hasCode) continue;
 
             items.Add(new LineItem
             {
                 Description = desc,
                 Quantity = quantity,
-                Price = amount,
+                Price = amount ?? 0m,
             });
         }
 
