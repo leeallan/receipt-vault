@@ -235,29 +235,6 @@
                         MinimumHeightRequest="60"/>
             </Border>
 
-            <!-- Upgrade prompt -->
-            <Border IsVisible="{Binding ShowUpgradePrompt}"
-                    BackgroundColor="{StaticResource AppSurfaceVariant}"
-                    StrokeThickness="1"
-                    Stroke="{StaticResource AppIndigo}"
-                    StrokeShape="RoundRectangle 16"
-                    Padding="20">
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="Free limit reached"
-                           FontSize="16" FontAttributes="Bold"
-                           TextColor="{StaticResource AppTextPrimary}"/>
-                    <Label Text="Upgrade to Premium for unlimited receipts — £2.99/month"
-                           FontSize="14"
-                           TextColor="{StaticResource AppTextSecondary}"/>
-                    <Button Text="Upgrade to Premium"
-                            BackgroundColor="{StaticResource AppIndigo}"
-                            TextColor="White"
-                            CornerRadius="12"
-                            HeightRequest="44"
-                            Margin="0,4,0,0"/>
-                </VerticalStackLayout>
-            </Border>
-
             <!-- Save button -->
             <Button Text="Save Receipt"
                     BackgroundColor="{StaticResource AppIndigo}"

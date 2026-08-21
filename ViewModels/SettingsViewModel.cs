@@ -16,8 +16,8 @@ public partial class SettingsViewModel(
     public string[] Currencies => ["GBP", "USD", "EUR"];
 
     public string SubscriptionLabel => IsPremium
-        ? "Premium — unlimited receipts"
-        : $"Free — {ReceiptCount}/{subscriptionService.FreeReceiptLimit} receipts used";
+        ? $"Premium — {subscriptionService.ActiveTier} plan"
+        : "Free — unlock cloud sync, PDF & tax reports";
 
     public async Task LoadAsync()
     {
@@ -74,10 +74,11 @@ public partial class SettingsViewModel(
     [RelayCommand]
     private async Task UpgradeAsync()
     {
-        // TODO: StoreKit 2 / Google Play integration
+        // TODO (Phase 2/5): open the tiered paywall + StoreKit / Play Billing purchase.
         await Shell.Current.DisplayAlertAsync(
             "Receipt Vault Premium",
-            "Unlimited receipts for £2.99/month.\n\nIn-app purchase coming soon.",
+            "Cloud sync, PDF & tax reports, and automatic line-item scanning.\n\n" +
+            "Monthly £2.99 · Annual £19.99 · Lifetime £39.99\n\nIn-app purchase coming soon.",
             "OK");
     }
 

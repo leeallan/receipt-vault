@@ -8,8 +8,7 @@ namespace ReceiptVault.ViewModels;
 
 public partial class CaptureViewModel(
     IOcrService ocrService,
-    IReceiptService receiptService,
-    ISubscriptionService subscriptionService) : BaseViewModel
+    IReceiptService receiptService) : BaseViewModel
 {
     [ObservableProperty] private string? capturedImagePath;
     [ObservableProperty] private string merchant = string.Empty;
@@ -20,7 +19,6 @@ public partial class CaptureViewModel(
     [ObservableProperty] private string? notes;
     [ObservableProperty] private bool isProcessingOcr;
     [ObservableProperty] private bool hasImage;
-    [ObservableProperty] private bool showUpgradePrompt;
 
     public ObservableCollection<LineItem> LineItems { get; } = [];
 
@@ -115,14 +113,6 @@ public partial class CaptureViewModel(
             return;
         }
 
-        var all = await receiptService.GetAllAsync();
-        var canAdd = await subscriptionService.CheckCanAddReceiptAsync(all.Count);
-        if (!canAdd)
-        {
-            ShowUpgradePrompt = true;
-            return;
-        }
-
         _ = decimal.TryParse(TotalText, out var total);
 
         var receipt = new Receipt
@@ -164,7 +154,6 @@ public partial class CaptureViewModel(
         SelectedCategory = "Other";
         IsBusinessExpense = false;
         Notes = null;
-        ShowUpgradePrompt = false;
         LineItems.Clear();
         OnPropertyChanged(nameof(HasLineItems));
     }

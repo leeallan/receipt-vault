@@ -36,7 +36,7 @@
                                VerticalOptions="Center"/>
                     </Grid>
                     <Button IsVisible="{Binding IsPremium, Converter={StaticResource InverseBool}}"
-                            Text="Upgrade — £2.99/month"
+                            Text="Upgrade to Premium"
                             BackgroundColor="White"
                             TextColor="{StaticResource AppIndigo}"
                             FontAttributes="Bold"
