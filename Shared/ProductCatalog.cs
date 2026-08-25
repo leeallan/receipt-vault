@@ -1,10 +1,9 @@
-using ReceiptVault.Models;
+namespace ReceiptVault.Shared;
 
-namespace ReceiptVault.Services;
-
-// The store product identifiers and how they map to plans. These IDs must match the
-// products created in App Store Connect and Google Play Console exactly.
-public static class BillingProducts
+// The store product identifiers and how they map to plans/entitlements. Shared by the
+// client and the server so the two can never disagree on what a product grants. These
+// IDs must match the products created in App Store Connect and Google Play exactly.
+public static class ProductCatalog
 {
     public const string Monthly = "com.receiptvault.premium.monthly";
     public const string Annual = "com.receiptvault.premium.annual";
@@ -25,4 +24,8 @@ public static class BillingProducts
         Lifetime => ProductTier.Lifetime,
         _ => ProductTier.Free,
     };
+
+    // Every paid tier unlocks the whole premium bundle today.
+    public static Entitlement EntitlementsFor(ProductTier tier) =>
+        tier == ProductTier.Free ? Entitlement.None : Entitlement.Premium;
 }

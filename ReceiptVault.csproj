@@ -44,4 +44,19 @@
 		<PackageReference Include="Plugin.InAppBilling" Version="10.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="Shared\ReceiptVault.Shared.csproj" />
+	</ItemGroup>
+
+	<!-- The app lives at the repo root; keep the sibling backend projects out of the
+	     MAUI app's default source globbing so their files aren't compiled into the app. -->
+	<ItemGroup>
+		<Compile Remove="Shared\**" />
+		<Compile Remove="Server\**" />
+		<None Remove="Shared\**" />
+		<None Remove="Server\**" />
+		<MauiXaml Remove="Shared\**" />
+		<MauiXaml Remove="Server\**" />
+	</ItemGroup>
+
 </Project>

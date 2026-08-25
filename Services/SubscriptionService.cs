@@ -1,4 +1,4 @@
-using ReceiptVault.Models;
+using ReceiptVault.Shared;
 
 namespace ReceiptVault.Services;
 

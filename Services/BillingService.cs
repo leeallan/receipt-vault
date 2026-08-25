@@ -1,15 +1,17 @@
 using Plugin.InAppBilling;
-using ReceiptVault.Models;
+using ReceiptVault.Shared;
 
 namespace ReceiptVault.Services;
 
 // Cross-platform in-app purchase wrapper over Plugin.InAppBilling (StoreKit on iOS,
 // Play Billing on Android). Connects on demand and always disconnects afterwards.
 //
-// NOTE (Phase 3): purchases are currently trusted locally via ISubscriptionService.SetTier.
-// This is the seam where server-side receipt/JWS verification will be inserted so the
-// entitlement can't be spoofed and survives reinstalls.
-public class BillingService(ISubscriptionService subscriptions) : IBillingService
+// Entitlements are confirmed server-side when the entitlement server is configured: the
+// signed transaction is sent to the server, which verifies it and returns the authoritative
+// tier. When the server is unconfigured or unreachable, we fall back to the store's own
+// answer so purchasing still works (offline grace / pre-deploy).
+public class BillingService(ISubscriptionService subscriptions, IEntitlementApi entitlementApi)
+    : IBillingService
 {
     private static IInAppBilling Billing => CrossInAppBilling.Current;
 
@@ -19,8 +21,8 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
         {
             if (!await Billing.ConnectAsync()) return [];
 
-            var subs = await Billing.GetProductInfoAsync(ItemType.Subscription, BillingProducts.SubscriptionIds);
-            var oneTime = await Billing.GetProductInfoAsync(ItemType.InAppPurchase, BillingProducts.NonConsumableIds);
+            var subs = await Billing.GetProductInfoAsync(ItemType.Subscription, ProductCatalog.SubscriptionIds);
+            var oneTime = await Billing.GetProductInfoAsync(ItemType.InAppPurchase, ProductCatalog.NonConsumableIds);
 
             var products = (subs ?? []).Concat(oneTime ?? [])
                 .Select(ToPremiumProduct)
@@ -41,7 +43,7 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
 
     public async Task<PurchaseResult> PurchaseAsync(string productId)
     {
-        var itemType = BillingProducts.IsSubscription(productId)
+        var itemType = ProductCatalog.IsSubscription(productId)
             ? ItemType.Subscription
             : ItemType.InAppPurchase;
 
@@ -60,9 +62,10 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
                 case PurchaseState.Restored:
                     // Acknowledge/finalize so the store doesn't auto-refund after 3 days.
                     await Billing.FinalizePurchaseAsync([purchase.TransactionIdentifier]);
-                    var tier = BillingProducts.TierFor(productId);
-                    subscriptions.SetTier(tier);   // TODO Phase 3: verify server-side first
-                    return PurchaseResult.Ok(tier);
+                    var tier = await ResolveTierAsync(purchase, productId);
+                    return tier == ProductTier.Free
+                        ? PurchaseResult.Fail("We couldn't confirm your purchase. If you were charged, tap Restore.")
+                        : PurchaseResult.Ok(tier);
 
                 case PurchaseState.PaymentPending:
                 case PurchaseState.Deferred:
@@ -108,12 +111,19 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
 
             var owned = (subs ?? []).Concat(oneTime ?? [])
                 .Where(p => p.State is PurchaseState.Purchased or PurchaseState.Restored)
-                .Select(p => BillingProducts.TierFor(p.ProductId))
-                .DefaultIfEmpty(ProductTier.Free)
-                .Max();   // Lifetime > Annual > Monthly > Free by enum order
+                .ToList();
 
-            subscriptions.SetTier(owned);   // TODO Phase 3: verify server-side first
-            return owned;
+            if (owned.Count == 0)
+            {
+                subscriptions.SetTier(ProductTier.Free);
+                return ProductTier.Free;
+            }
+
+            // Verify the highest-value entitlement the account owns.
+            var best = owned
+                .OrderByDescending(p => (int)ProductCatalog.TierFor(p.ProductId))
+                .First();
+            return await ResolveTierAsync(best, best.ProductId);
         }
         catch
         {
@@ -125,10 +135,42 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
         }
     }
 
+    // Confirms a purchase with the entitlement server and applies the resulting tier.
+    // Server (when configured) is authoritative — even a downgrade to Free is honoured, as
+    // that means verification failed. When the server is unconfigured/unreachable we fall
+    // back to the store's own product id so the user isn't blocked.
+    private async Task<ProductTier> ResolveTierAsync(InAppBillingPurchase purchase, string productId)
+    {
+        var localTier = ProductCatalog.TierFor(productId);
+
+        if (!entitlementApi.IsConfigured)
+        {
+            subscriptions.SetTier(localTier);
+            return localTier;
+        }
+
+        var platform = DeviceInfo.Current.Platform == DevicePlatform.iOS
+            ? StorePlatform.Apple
+            : StorePlatform.Google;
+
+        // Apple: the signed StoreKit 2 transaction. Google: product id + purchase token.
+        // TODO: confirm against a sandbox purchase which plugin field carries Apple's JWS.
+        var request = platform == StorePlatform.Apple
+            ? new VerifyEntitlementRequest(platform, SignedTransaction: purchase.PurchaseToken)
+            : new VerifyEntitlementRequest(platform, ProductId: productId, PurchaseToken: purchase.PurchaseToken);
+
+        var response = await entitlementApi.VerifyAsync(request);
+
+        // Unreachable → offline grace: trust the store locally this session.
+        var tier = response?.Tier ?? localTier;
+        subscriptions.SetTier(tier);
+        return tier;
+    }
+
     private static PremiumProduct ToPremiumProduct(InAppBillingProduct p) => new()
     {
         ProductId = p.ProductId,
-        Tier = BillingProducts.TierFor(p.ProductId),
+        Tier = ProductCatalog.TierFor(p.ProductId),
         LocalizedPrice = p.LocalizedPrice,
         Title = p.Name,
         Description = p.Description,

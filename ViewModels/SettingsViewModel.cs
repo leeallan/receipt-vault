@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ReceiptVault.Services;
+using ReceiptVault.Shared;
 
 namespace ReceiptVault.ViewModels;
 
@@ -119,7 +120,7 @@ public partial class SettingsViewModel(
 
             await Shell.Current.DisplayAlertAsync(
                 "Restore purchases",
-                tier == Models.ProductTier.Free
+                tier == ProductTier.Free
                     ? "No previous purchases were found for this account."
                     : $"Restored your {tier} plan.",
                 "OK");
