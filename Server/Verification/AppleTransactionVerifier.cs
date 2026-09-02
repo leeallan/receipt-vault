@@ -11,15 +11,17 @@ namespace ReceiptVault.Server.Verification;
 public class AppleTransactionVerifier : IStoreVerifier
 {
     private readonly AppleOptions _options;
+    private readonly AppStoreServerApiClient _api;
     private readonly ILogger<AppleTransactionVerifier> _logger;
     private readonly X509Certificate2? _appleRoot;
 
     public StorePlatform Platform => StorePlatform.Apple;
 
     public AppleTransactionVerifier(IOptions<AppleOptions> options,
-        ILogger<AppleTransactionVerifier> logger)
+        AppStoreServerApiClient api, ILogger<AppleTransactionVerifier> logger)
     {
         _options = options.Value;
+        _api = api;
         _logger = logger;
 
         if (!string.IsNullOrWhiteSpace(_options.RootCertPath) && File.Exists(_options.RootCertPath))
@@ -28,36 +30,43 @@ public class AppleTransactionVerifier : IStoreVerifier
             _logger.LogWarning("Apple root cert not configured; chain validation will fail closed.");
     }
 
-    public Task<VerificationResult> VerifyAsync(VerifyEntitlementRequest request, CancellationToken ct)
+    public async Task<VerificationResult> VerifyAsync(VerifyEntitlementRequest request, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(request.SignedTransaction))
-            return Task.FromResult(VerificationResult.Invalid("Missing signed transaction."));
+        // The signed transaction (JWS) may be supplied directly (webhook, or a future
+        // StoreKit 2 client), or fetched from Apple by transaction id (the current app path,
+        // because Plugin.InAppBilling can't produce a JWS itself).
+        var signedTransaction = request.SignedTransaction;
+        if (string.IsNullOrWhiteSpace(signedTransaction) && !string.IsNullOrWhiteSpace(request.TransactionId))
+            signedTransaction = await _api.GetSignedTransactionAsync(request.TransactionId, ct);
+
+        if (string.IsNullOrWhiteSpace(signedTransaction))
+            return VerificationResult.Invalid("No verifiable transaction supplied.");
 
         try
         {
-            var jws = SignedJws.Parse(request.SignedTransaction);
+            var jws = SignedJws.Parse(signedTransaction);
             var chain = jws.GetCertificateChain();
             if (chain.Count == 0)
-                return Task.FromResult(VerificationResult.Invalid("No signing certificate in token."));
+                return VerificationResult.Invalid("No signing certificate in token.");
 
             // Certificate chain → Apple root.
             if (_options.RequireChainValidation && _appleRoot is null)
-                return Task.FromResult(VerificationResult.Invalid("Server missing Apple root certificate."));
+                return VerificationResult.Invalid("Server missing Apple root certificate.");
 
             if (!SignedJws.ValidateChain(chain, _appleRoot, out var chainError))
-                return Task.FromResult(VerificationResult.Invalid($"Certificate chain invalid: {chainError}"));
+                return VerificationResult.Invalid($"Certificate chain invalid: {chainError}");
 
             // Signature over header.payload with the leaf key.
             if (!jws.VerifySignature(chain[0]))
-                return Task.FromResult(VerificationResult.Invalid("Signature verification failed."));
+                return VerificationResult.Invalid("Signature verification failed.");
 
             var payload = jws.GetPayload<AppleTransactionPayload>();
             if (payload is null)
-                return Task.FromResult(VerificationResult.Invalid("Could not read transaction payload."));
+                return VerificationResult.Invalid("Could not read transaction payload.");
 
             // Must be our app.
             if (!string.Equals(payload.BundleId, _options.BundleId, StringComparison.OrdinalIgnoreCase))
-                return Task.FromResult(VerificationResult.Invalid("Bundle id mismatch."));
+                return VerificationResult.Invalid("Bundle id mismatch.");
 
             var expiresAt = payload.ExpiresDate is long exp
                 ? DateTimeOffset.FromUnixTimeMilliseconds(exp)
@@ -67,18 +76,18 @@ public class AppleTransactionVerifier : IStoreVerifier
             // Active if not revoked and (non-expiring, i.e. lifetime) or not yet expired.
             var isActive = !revoked && (expiresAt is null || expiresAt > DateTimeOffset.UtcNow);
 
-            return Task.FromResult(new VerificationResult(
+            return new VerificationResult(
                 IsValid: true,
                 ProductId: payload.ProductId,
                 OriginalTransactionId: payload.OriginalTransactionId ?? payload.TransactionId,
                 ExpiresAt: expiresAt,
                 IsActive: isActive,
-                Error: null));
+                Error: null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Apple transaction verification threw.");
-            return Task.FromResult(VerificationResult.Invalid("Malformed or unverifiable transaction."));
+            return VerificationResult.Invalid("Malformed or unverifiable transaction.");
         }
     }
 }

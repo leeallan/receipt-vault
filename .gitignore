@@ -59,3 +59,7 @@ coverage*.info
 .env.local
 secrets.json
 appsettings.*.local.json
+
+# Apple App Store Server API private keys — NEVER commit these
+*.p8
+AuthKey_*.p8

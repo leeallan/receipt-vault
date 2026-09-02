@@ -16,7 +16,8 @@ public class PremiumProduct
 
 // Outcome of a purchase attempt. Cancellation is distinguished from failure so the UI
 // can stay silent when the user simply backs out of the store sheet.
-public record PurchaseResult(bool Success, ProductTier Tier, bool Cancelled, string? Error)
+public record PurchaseResult(bool Success, ProductTier Tier, bool Cancelled, string? Error,
+    string? Diagnostics = null)
 {
     public static PurchaseResult Ok(ProductTier tier) => new(true, tier, false, null);
     public static PurchaseResult Cancelled_() => new(false, ProductTier.Free, true, null);

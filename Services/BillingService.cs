@@ -62,10 +62,12 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
                 case PurchaseState.Restored:
                     // Acknowledge/finalize so the store doesn't auto-refund after 3 days.
                     await Billing.FinalizePurchaseAsync([purchase.TransactionIdentifier]);
+                    var diagnostics = DescribePurchase(purchase);
                     var tier = await ResolveTierAsync(purchase, productId);
-                    return tier == ProductTier.Free
+                    var result = tier == ProductTier.Free
                         ? PurchaseResult.Fail("We couldn't confirm your purchase. If you were charged, tap Restore.")
                         : PurchaseResult.Ok(tier);
+                    return result with { Diagnostics = diagnostics };
 
                 case PurchaseState.PaymentPending:
                 case PurchaseState.Deferred:
@@ -153,10 +155,11 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
             ? StorePlatform.Apple
             : StorePlatform.Google;
 
-        // Apple: the signed StoreKit 2 transaction. Google: product id + purchase token.
-        // TODO: confirm against a sandbox purchase which plugin field carries Apple's JWS.
+        // Apple: send the transaction id — the server fetches the signed transaction (JWS)
+        // from Apple's App Store Server API (Plugin.InAppBilling is StoreKit 1 and can't
+        // hand us a JWS). Google: product id + purchase token.
         var request = platform == StorePlatform.Apple
-            ? new VerifyEntitlementRequest(platform, SignedTransaction: purchase.PurchaseToken)
+            ? new VerifyEntitlementRequest(platform, TransactionId: purchase.TransactionIdentifier)
             : new VerifyEntitlementRequest(platform, ProductId: productId, PurchaseToken: purchase.PurchaseToken);
 
         var response = await entitlementApi.VerifyAsync(request);
@@ -165,6 +168,33 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
         var tier = response?.Tier ?? localTier;
         subscriptions.SetTier(tier);
         return tier;
+    }
+
+    // Diagnostic for sandbox testing: works out whether the store handed us Apple's
+    // StoreKit 2 signed transaction (a JWS — three base64url parts, header starts "eyJ")
+    // in PurchaseToken, which is what we forward to the server for verification.
+    private static string DescribePurchase(InAppBillingPurchase p)
+    {
+        var token = p.PurchaseToken ?? string.Empty;
+        var dots = token.Count(c => c == '.');
+        var head = token.Length > 20 ? token[..20] : token;
+        var looksJws = token.StartsWith("eyJ", StringComparison.Ordinal) && dots == 2;
+
+#if DEBUG
+        // Full token to the debug console for anyone able to read device logs.
+        System.Diagnostics.Debug.WriteLine($"[IAP] PurchaseToken (len {token.Length}): {token}");
+#endif
+
+        return
+            $"Product: {p.ProductId}\n" +
+            $"State: {p.State}\n" +
+            $"TxnId: {p.TransactionIdentifier}\n" +
+            $"OrigTxnId: {p.OriginalTransactionIdentifier}\n" +
+            $"PurchaseToken: len={token.Length}, dots={dots}\n" +
+            $"head='{head}'\n" +
+            $"Verdict: {(looksJws
+                ? "PurchaseToken IS the StoreKit 2 JWS ✓"
+                : "PurchaseToken is NOT a JWS (receipt/other) — JWS field TBD")}";
     }
 
     private static PremiumProduct ToPremiumProduct(InAppBillingProduct p) => new()

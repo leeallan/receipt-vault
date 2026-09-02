@@ -15,4 +15,9 @@
 		<ProjectReference Include="..\Shared\ReceiptVault.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- Public Apple Root CA — G3 (not a secret); used to validate transaction JWS chains. -->
+		<Content Include="AppleRootCA-G3.cer" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
 </Project>

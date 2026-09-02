@@ -13,7 +13,7 @@
 		<MauiXamlInflator>SourceGen</MauiXamlInflator>
 
 		<ApplicationTitle>Receipt Vault</ApplicationTitle>
-		<ApplicationId>com.receiptvault.app</ApplicationId>
+		<ApplicationId>com.farabove.receiptvault</ApplicationId>
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 		<WindowsPackageType>None</WindowsPackageType>

@@ -11,6 +11,10 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 
 builder.Services.Configure<AppleOptions>(builder.Configuration.GetSection("Apple"));
 
+// Fetches signed transactions from Apple's App Store Server API.
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<AppStoreServerApiClient>();
+
 // One verifier per platform; the endpoint dispatches by request.Platform.
 builder.Services.AddSingleton<IStoreVerifier, AppleTransactionVerifier>();
 builder.Services.AddSingleton<IStoreVerifier, GoogleStoreVerifier>();

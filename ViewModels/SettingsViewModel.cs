@@ -17,6 +17,15 @@ public partial class SettingsViewModel(
 
     public string[] Currencies => ["GBP", "USD", "EUR"];
 
+    // Debug-only: exposes a "Reset to Free" control for sandbox purchase testing so we can
+    // re-open the paywall without deleting/reinstalling. Compiled out of release builds.
+    public bool IsDebugBuild =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
     public string SubscriptionLabel => IsPremium
         ? $"Premium — {subscriptionService.ActiveTier} plan"
         : "Free — unlock cloud sync, PDF & tax reports";
@@ -101,6 +110,9 @@ public partial class SettingsViewModel(
             var result = await billingService.PurchaseAsync(selected.ProductId);
             await LoadAsync();
 
+            if (IsDebugBuild && !string.IsNullOrEmpty(result.Diagnostics))
+                await Shell.Current.DisplayAlertAsync("Purchase details (debug)", result.Diagnostics, "OK");
+
             if (result.Success)
                 await Shell.Current.DisplayAlertAsync(
                     "Welcome to Premium", "Thanks! Your premium features are now unlocked.", "OK");
@@ -108,6 +120,15 @@ public partial class SettingsViewModel(
                 await Shell.Current.DisplayAlertAsync(
                     "Purchase failed", result.Error ?? "Please try again.", "OK");
         });
+    }
+
+    // Debug-only: clears the locally cached entitlement so the paywall reappears. Does NOT
+    // affect the sandbox's record of what the tester owns — clear that in App Store Connect.
+    [RelayCommand]
+    private async Task ResetEntitlementAsync()
+    {
+        subscriptionService.SetTier(ProductTier.Free);
+        await LoadAsync();
     }
 
     [RelayCommand]
