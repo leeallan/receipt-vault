@@ -9,7 +9,9 @@ namespace ReceiptVault.ViewModels;
 [QueryProperty(nameof(ReceiptId), "id")]
 public partial class ReceiptDetailViewModel(
     IReceiptService receiptService,
-    IExportService exportService) : BaseViewModel
+    IExportService exportService,
+    ISubscriptionService subscriptionService,
+    IBillingService billingService) : BaseViewModel
 {
     [ObservableProperty] private int receiptId;
     [ObservableProperty] private Receipt? receipt;
@@ -24,6 +26,37 @@ public partial class ReceiptDetailViewModel(
     public ObservableCollection<LineItem> LineItems { get; } = [];
 
     public bool HasLineItems => LineItems.Count > 0;
+
+    // Item scanning is a Premium feature. The items are stored regardless, but a free
+    // user sees them locked behind an unlock prompt rather than the itemised breakdown.
+    public bool IsPremium => subscriptionService.Has(Shared.Entitlement.LineItemOcr);
+    public bool ShowLockedItems => !IsPremium && HasLineItems;
+    public bool ShowBottomAddItem => IsPremium && HasLineItems;
+    public int LineItemCount => LineItems.Count;
+
+    private void NotifyItemsChanged()
+    {
+        OnPropertyChanged(nameof(HasLineItems));
+        OnPropertyChanged(nameof(ShowLockedItems));
+        OnPropertyChanged(nameof(ShowBottomAddItem));
+        OnPropertyChanged(nameof(LineItemCount));
+    }
+
+    // Re-evaluate the premium-gated properties so the item list reveals immediately after
+    // an unlock (the items are already loaded, they were just hidden).
+    public void RefreshPremiumState()
+    {
+        OnPropertyChanged(nameof(IsPremium));
+        OnPropertyChanged(nameof(ShowLockedItems));
+        OnPropertyChanged(nameof(ShowBottomAddItem));
+    }
+
+    [RelayCommand]
+    private async Task UnlockAsync()
+    {
+        var unlocked = await PremiumPurchase.RunAsync(billingService);
+        if (unlocked) RefreshPremiumState();
+    }
 
     public List<string> Categories => Category.All.Select(c => c.Name).ToList();
 
@@ -46,30 +79,42 @@ public partial class ReceiptDetailViewModel(
             LineItems.Clear();
             foreach (var item in await receiptService.GetLineItemsAsync(id))
                 LineItems.Add(item);
-            OnPropertyChanged(nameof(HasLineItems));
+            OnPropertyChanged(nameof(IsPremium));
+            NotifyItemsChanged();
         });
     }
 
     [RelayCommand]
     private void ToggleEdit() => IsEditing = !IsEditing;
 
+    // Top "＋ Add item" button — inserts a new blank item at the top of the list.
     [RelayCommand]
     private void AddLineItem()
     {
-        LineItems.Add(new LineItem
-        {
-            Description = string.Empty,
-            Quantity = 1,
-            Currency = Receipt?.Currency ?? "GBP",
-        });
-        OnPropertyChanged(nameof(HasLineItems));
+        LineItems.Insert(0, NewLineItem());
+        NotifyItemsChanged();
     }
+
+    // Bottom "＋ Add item" button — appends a new blank item at the end of the list.
+    [RelayCommand]
+    private void AddLineItemBottom()
+    {
+        LineItems.Add(NewLineItem());
+        NotifyItemsChanged();
+    }
+
+    private LineItem NewLineItem() => new()
+    {
+        Description = string.Empty,
+        Quantity = 1,
+        Currency = Receipt?.Currency ?? "GBP",
+    };
 
     [RelayCommand]
     private void RemoveLineItem(LineItem item)
     {
         LineItems.Remove(item);
-        OnPropertyChanged(nameof(HasLineItems));
+        NotifyItemsChanged();
     }
 
     [RelayCommand]

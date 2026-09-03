@@ -16,21 +16,20 @@ We grant you a personal, non-exclusive, non-transferable, revocable licence to u
 
 ## 2. Your content
 
-Receipts you capture and the details you add are **yours**. We do not claim ownership. If you enable iCloud Backup & Sync, that content is stored in **your own iCloud** (Apple) — we do not store it or claim any rights over it. You are responsible for the content you add and for keeping your own records where required (for example, for tax purposes).
+Receipts you capture and the details you add are **yours**. We do not claim ownership. Your content is stored **on your device only** — we operate no servers and never receive a copy of it. You are responsible for the content you add and for keeping your own records where required (for example, for tax purposes), including exporting your own backups where you need them.
 
 ## 3. Purchases and billing
 
-Receipt Vault is free to use, with a single optional **one-time purchase** ("Premium") that unlocks the premium features permanently, including iCloud Backup & Sync. **There is no subscription.**
+Receipt Vault is free to use, with a single optional **one-time purchase** ("Premium") that unlocks the premium features permanently — automatic line-item scanning, PDF and itemised export, and tax & expense reports. **There is no subscription.**
 
 - Payment is charged to your Apple Account at confirmation of purchase.
 - Premium is a non-consumable purchase: you can restore it on your other devices signed in to the same Apple Account.
-- iCloud Backup & Sync uses your own iCloud storage and Apple account, and is subject to Apple's iCloud terms and your available storage.
 
 All purchases are processed by Apple. Refunds are handled by Apple under their policies; we cannot directly issue refunds.
 
 ## 4. Features and availability
 
-We may add, change, or discontinue features over time. We aim to keep the app and its services available but do not guarantee uninterrupted or error-free operation. iCloud Backup & Sync depends on your iCloud account, network connectivity, and Apple's infrastructure.
+We may add, change, or discontinue features over time. We aim to keep the app available but do not guarantee uninterrupted or error-free operation. The app runs entirely on your device and does not depend on any server we operate.
 
 ## 5. Acceptable use
 

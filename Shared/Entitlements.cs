@@ -13,11 +13,12 @@ public enum ProductTier
 public enum Entitlement
 {
     None        = 0,
-    CloudSync   = 1 << 0,  // iCloud (CloudKit) backup + multi-device sync
+    CloudSync   = 1 << 0,  // iCloud (CloudKit) backup + sync — reserved for a future release, not yet built or sold
     PdfExport   = 1 << 1,  // PDF export (basic CSV stays free)
     TaxReports  = 1 << 2,  // business-expense / tax summary reports
     LineItemOcr = 1 << 3,  // automatic line-item extraction + itemised export
 
-    // The full premium bundle unlocked by the one-time Premium purchase.
-    Premium = CloudSync | PdfExport | TaxReports | LineItemOcr,
+    // The full premium bundle unlocked by the one-time Premium purchase. All local —
+    // CloudSync is deliberately excluded until iCloud sync actually ships.
+    Premium = PdfExport | TaxReports | LineItemOcr,
 }

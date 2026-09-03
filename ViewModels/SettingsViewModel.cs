@@ -8,6 +8,7 @@ namespace ReceiptVault.ViewModels;
 public partial class SettingsViewModel(
     IReceiptService receiptService,
     IExportService exportService,
+    IReportService reportService,
     ISubscriptionService subscriptionService,
     IBillingService billingService) : BaseViewModel
 {
@@ -28,7 +29,7 @@ public partial class SettingsViewModel(
 
     public string SubscriptionLabel => IsPremium
         ? "Premium — unlocked. Thank you!"
-        : "Free — unlock item scanning, reports & iCloud sync";
+        : "Free — unlock item scanning, PDF & tax reports";
 
     public async Task LoadAsync()
     {
@@ -54,7 +55,10 @@ public partial class SettingsViewModel(
                 return;
             }
             var fileName = $"receipts_export_{DateTime.Today:yyyy-MM-dd}";
-            var items = await receiptService.GetAllLineItemsAsync();
+            // Free export is receipt-level; the itemised sub-rows are a premium feature.
+            var items = subscriptionService.Has(Entitlement.LineItemOcr)
+                ? await receiptService.GetAllLineItemsAsync()
+                : null;
             var path = await exportService.ExportToCsvAsync(all, fileName, items);
             await exportService.ShareFileAsync(path);
         });
@@ -73,13 +77,84 @@ public partial class SettingsViewModel(
                 return;
             }
             var fileName = $"receipts_{now:yyyy-MM}";
-            var allItems = await receiptService.GetAllLineItemsAsync();
-            var items = allItems
-                .Where(kv => monthly.Any(r => r.Id == kv.Key))
-                .ToDictionary(kv => kv.Key, kv => kv.Value);
+            // Free export is receipt-level; the itemised sub-rows are a premium feature.
+            Dictionary<int, List<Models.LineItem>>? items = null;
+            if (subscriptionService.Has(Entitlement.LineItemOcr))
+            {
+                var allItems = await receiptService.GetAllLineItemsAsync();
+                items = allItems
+                    .Where(kv => monthly.Any(r => r.Id == kv.Key))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
+            }
             var path = await exportService.ExportToCsvAsync(monthly, fileName, items);
             await exportService.ShareFileAsync(path);
         });
+    }
+
+    // PDF export (premium). A polished receipt-level listing with spend/tax totals.
+    [RelayCommand]
+    private async Task ExportPdfAsync()
+    {
+        if (!await EnsurePremiumAsync("PDF export")) return;
+
+        await RunAsync(async () =>
+        {
+            var all = await receiptService.GetAllAsync();
+            if (all.Count == 0)
+            {
+                await Shell.Current.DisplayAlertAsync("Nothing to export", "You have no receipts yet.", "OK");
+                return;
+            }
+            var fileName = $"receipts_{DateTime.Today:yyyy-MM-dd}";
+            var subtitle = $"All receipts · exported {DateTime.Today:d MMM yyyy}";
+            var path = await reportService.BuildReceiptsPdfAsync(all, "Receipts", subtitle, fileName);
+            if (path is null)
+            {
+                await Shell.Current.DisplayAlertAsync("Not available", "PDF export isn't available on this device.", "OK");
+                return;
+            }
+            await exportService.ShareFileAsync(path);
+        });
+    }
+
+    // Tax & expense report (premium). Business/personal totals, tax, and category breakdown.
+    [RelayCommand]
+    private async Task TaxReportAsync()
+    {
+        if (!await EnsurePremiumAsync("Tax & expense reports")) return;
+
+        await RunAsync(async () =>
+        {
+            var all = await receiptService.GetAllAsync();
+            if (all.Count == 0)
+            {
+                await Shell.Current.DisplayAlertAsync("Nothing to report", "You have no receipts yet.", "OK");
+                return;
+            }
+            var fileName = $"tax_report_{DateTime.Today:yyyy-MM-dd}";
+            var period = $"All receipts · generated {DateTime.Today:d MMM yyyy}";
+            var path = await reportService.BuildTaxReportPdfAsync(all, period, fileName);
+            if (path is null)
+            {
+                await Shell.Current.DisplayAlertAsync("Not available", "PDF reports aren't available on this device.", "OK");
+                return;
+            }
+            await exportService.ShareFileAsync(path);
+        });
+    }
+
+    // Premium gate for a specific feature: returns true if already unlocked, otherwise
+    // offers the one-time unlock and returns false.
+    private async Task<bool> EnsurePremiumAsync(string feature)
+    {
+        if (subscriptionService.IsPremium) return true;
+
+        var unlock = await Shell.Current.DisplayAlertAsync(
+            "Premium feature",
+            $"{feature} is part of Receipt Vault Premium — a one-time unlock.",
+            "Unlock Premium", "Not now");
+        if (unlock) await UpgradeAsync();
+        return false;
     }
 
     // One-time unlock: a single non-consumable purchase. Confirm the localized price, buy,
@@ -89,32 +164,8 @@ public partial class SettingsViewModel(
     {
         await RunAsync(async () =>
         {
-            var products = await billingService.GetProductsAsync();
-            var premium = products.FirstOrDefault();
-            if (premium is null)
-            {
-                await Shell.Current.DisplayAlertAsync(
-                    "Store unavailable",
-                    "Couldn't load Premium right now. Please try again later.",
-                    "OK");
-                return;
-            }
-
-            var confirm = await Shell.Current.DisplayAlertAsync(
-                "Unlock Premium",
-                $"Unlock automatic item scanning, PDF & tax reports, and iCloud backup & sync for a one-time {premium.LocalizedPrice}.",
-                $"Unlock — {premium.LocalizedPrice}", "Not now");
-            if (!confirm) return;
-
-            var result = await billingService.PurchaseAsync(premium.ProductId);
-            await LoadAsync();
-
-            if (result.Success)
-                await Shell.Current.DisplayAlertAsync(
-                    "Welcome to Premium", "Thanks! Your premium features are now unlocked.", "OK");
-            else if (!result.Cancelled)
-                await Shell.Current.DisplayAlertAsync(
-                    "Purchase failed", result.Error ?? "Please try again.", "OK");
+            var unlocked = await PremiumPurchase.RunAsync(billingService);
+            if (unlocked) await LoadAsync();
         });
     }
 

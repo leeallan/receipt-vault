@@ -102,6 +102,9 @@
                         <DataTrigger TargetType="Border" Binding="{Binding HasLineItems}" Value="False">
                             <Setter Property="IsVisible" Value="False"/>
                         </DataTrigger>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsPremium}" Value="False">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
                     </Border.Triggers>
                     <VerticalStackLayout Spacing="12">
                         <Label Text="Items" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
@@ -133,6 +136,43 @@
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Locked items card for free users (view mode) -->
+                <Border BackgroundColor="{StaticResource AppSurface}"
+                        IsVisible="{Binding ShowLockedItems}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 16" Padding="20">
+                    <Border.Triggers>
+                        <DataTrigger TargetType="Border" Binding="{Binding IsEditing}" Value="True">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </DataTrigger>
+                    </Border.Triggers>
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="Items" FontSize="13"
+                                   TextColor="{StaticResource AppTextSecondary}"
+                                   VerticalOptions="Center"/>
+                            <Label Grid.Column="1" Text="🔒 Premium" FontSize="12"
+                                   TextColor="{StaticResource AppMint}"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                        <Label Text="{Binding LineItemCount, StringFormat='{0} items scanned from this receipt. Unlock Premium to view and edit the itemised breakdown.'}"
+                               FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                        <VerticalStackLayout Spacing="6">
+                            <BoxView HeightRequest="12" WidthRequest="200" HorizontalOptions="Start"
+                                     Color="{StaticResource AppSurfaceVariant}" CornerRadius="6"/>
+                            <BoxView HeightRequest="12" WidthRequest="150" HorizontalOptions="Start"
+                                     Color="{StaticResource AppSurfaceVariant}" CornerRadius="6"/>
+                            <BoxView HeightRequest="12" WidthRequest="180" HorizontalOptions="Start"
+                                     Color="{StaticResource AppSurfaceVariant}" CornerRadius="6"/>
+                        </VerticalStackLayout>
+                        <Button Text="Unlock Premium"
+                                BackgroundColor="{StaticResource AppIndigo}"
+                                TextColor="White" FontAttributes="Bold"
+                                CornerRadius="10" HeightRequest="44"
+                                Command="{Binding UnlockCommand}"/>
                     </VerticalStackLayout>
                 </Border>
 
@@ -199,7 +239,8 @@
                                 MinimumHeightRequest="60"/>
                     </Border>
 
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0"
+                          IsVisible="{Binding IsPremium}">
                         <Label Grid.Column="0" Text="Items" FontSize="13"
                                TextColor="{StaticResource AppTextSecondary}"
                                VerticalOptions="Center"/>
@@ -214,7 +255,8 @@
                                 Command="{Binding AddLineItemCommand}"/>
                     </Grid>
 
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding LineItems}" Spacing="8">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding LineItems}" Spacing="8"
+                                         IsVisible="{Binding IsPremium}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="models:LineItem">
                                 <Border BackgroundColor="{StaticResource AppSurface}"
@@ -260,6 +302,40 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
+
+                    <!-- Bottom add-item button: appends to the end of the list -->
+                    <Button Text="＋ Add item"
+                            IsVisible="{Binding ShowBottomAddItem}"
+                            FontSize="13"
+                            HeightRequest="40"
+                            BackgroundColor="{StaticResource AppSurfaceVariant}"
+                            TextColor="{StaticResource AppMint}"
+                            CornerRadius="10"
+                            Command="{Binding AddLineItemBottomCommand}"/>
+
+                    <!-- Locked items card for free users (edit mode) -->
+                    <Border IsVisible="{Binding ShowLockedItems}"
+                            BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="16">
+                        <VerticalStackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="Items" FontSize="13"
+                                       TextColor="{StaticResource AppTextSecondary}"
+                                       VerticalOptions="Center"/>
+                                <Label Grid.Column="1" Text="🔒 Premium" FontSize="12"
+                                       TextColor="{StaticResource AppMint}"
+                                       VerticalOptions="Center"/>
+                            </Grid>
+                            <Label Text="{Binding LineItemCount, StringFormat='{0} items scanned from this receipt. Unlock Premium to view and edit the itemised breakdown.'}"
+                                   FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                            <Button Text="Unlock Premium"
+                                    BackgroundColor="{StaticResource AppIndigo}"
+                                    TextColor="White" FontAttributes="Bold"
+                                    CornerRadius="10" HeightRequest="44"
+                                    Command="{Binding UnlockCommand}"/>
+                        </VerticalStackLayout>
+                    </Border>
 
                     <Button Text="Save changes"
                             BackgroundColor="{StaticResource AppIndigo}"

@@ -8,7 +8,9 @@ namespace ReceiptVault.ViewModels;
 
 public partial class CaptureViewModel(
     IOcrService ocrService,
-    IReceiptService receiptService) : BaseViewModel
+    IReceiptService receiptService,
+    ISubscriptionService subscriptionService,
+    IBillingService billingService) : BaseViewModel
 {
     [ObservableProperty] private string? capturedImagePath;
     [ObservableProperty] private string merchant = string.Empty;
@@ -23,6 +25,37 @@ public partial class CaptureViewModel(
     public ObservableCollection<LineItem> LineItems { get; } = [];
 
     public bool HasLineItems => LineItems.Count > 0;
+
+    // Item scanning is a Premium feature. Free users still get items scanned (so they
+    // see the value and the data is there when they upgrade), but the list is locked.
+    public bool IsPremium => subscriptionService.Has(Shared.Entitlement.LineItemOcr);
+    public bool ShowLockedItems => !IsPremium && HasLineItems;
+    public bool ShowBottomAddItem => IsPremium && HasLineItems;
+    public int LineItemCount => LineItems.Count;
+
+    private void NotifyItemsChanged()
+    {
+        OnPropertyChanged(nameof(HasLineItems));
+        OnPropertyChanged(nameof(ShowLockedItems));
+        OnPropertyChanged(nameof(ShowBottomAddItem));
+        OnPropertyChanged(nameof(LineItemCount));
+    }
+
+    // Re-evaluate the premium-gated properties so the item list reveals immediately after
+    // an unlock, without leaving the page (navigating away would reset the capture).
+    public void RefreshPremiumState()
+    {
+        OnPropertyChanged(nameof(IsPremium));
+        OnPropertyChanged(nameof(ShowLockedItems));
+        OnPropertyChanged(nameof(ShowBottomAddItem));
+    }
+
+    [RelayCommand]
+    private async Task UnlockAsync()
+    {
+        var unlocked = await PremiumPurchase.RunAsync(billingService);
+        if (unlocked) RefreshPremiumState();
+    }
 
     public List<string> Categories => Models.Category.All.Select(c => c.Name).ToList();
 
@@ -96,7 +129,7 @@ public partial class CaptureViewModel(
             LineItems.Clear();
             foreach (var item in result.Items)
                 LineItems.Add(item);
-            OnPropertyChanged(nameof(HasLineItems));
+            NotifyItemsChanged();
         }
     }
 
@@ -105,18 +138,27 @@ public partial class CaptureViewModel(
         try { if (File.Exists(path)) File.Delete(path); } catch { /* best effort */ }
     }
 
+    // Top "＋ Add item" button — inserts a new blank item at the top of the list.
     [RelayCommand]
     private void AddLineItem()
     {
+        LineItems.Insert(0, new LineItem { Description = string.Empty, Quantity = 1 });
+        NotifyItemsChanged();
+    }
+
+    // Bottom "＋ Add item" button — appends a new blank item at the end of the list.
+    [RelayCommand]
+    private void AddLineItemBottom()
+    {
         LineItems.Add(new LineItem { Description = string.Empty, Quantity = 1 });
-        OnPropertyChanged(nameof(HasLineItems));
+        NotifyItemsChanged();
     }
 
     [RelayCommand]
     private void RemoveLineItem(LineItem item)
     {
         LineItems.Remove(item);
-        OnPropertyChanged(nameof(HasLineItems));
+        NotifyItemsChanged();
     }
 
     [RelayCommand]
@@ -170,6 +212,7 @@ public partial class CaptureViewModel(
         IsBusinessExpense = false;
         Notes = null;
         LineItems.Clear();
-        OnPropertyChanged(nameof(HasLineItems));
+        NotifyItemsChanged();
+        RefreshPremiumState();
     }
 }
