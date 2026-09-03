@@ -1,0 +1,137 @@
+@page "/premium"
+
+<PageTitle>Premium — Receipt Vault</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="What you get with Receipt Vault Premium — automatic line-item scanning, PDF and itemised export, tax & expense reports, and cloud backup & sync on the monthly and annual plans." />
+    <link rel="canonical" href="https://receiptvault.farabove.uk/premium" />
+    <meta property="og:title" content="Premium — Receipt Vault" />
+    <meta property="og:description" content="Item scanning, PDF & tax reports, and cloud backup & sync. Monthly, annual, or one-time lifetime." />
+    <meta property="og:url" content="https://receiptvault.farabove.uk/premium" />
+</HeadContent>
+
+<div class="page-hero" style="padding-bottom:40px;">
+    <div class="page-hero-content">
+        <span class="section-label">Premium</span>
+        <h1>More from every receipt</h1>
+        <p>Scanning and organising are free. Premium unlocks the powerful extras — and the subscriptions add cloud backup so your receipts are safe beyond your phone.</p>
+    </div>
+</div>
+
+<!-- ═══ WHAT PREMIUM UNLOCKS ═══ -->
+<div class="section section-center" style="padding-top:20px;">
+    <span class="section-label">What you get</span>
+    <h2 class="section-title">Four premium upgrades</h2>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon icon-bg-green">🧾</div>
+            <h3>Automatic line-item scanning</h3>
+            <p>Go beyond the total. Premium captures every item on the receipt — description, quantity, price and any savings — and stitches multi-column supermarket receipts back into a clean list you can edit.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon icon-bg-gold">📄</div>
+            <h3>PDF &amp; itemised export</h3>
+            <p>Export polished PDFs and full itemised spreadsheets — every receipt with its line items as linked rows, ready for bookkeeping or a claim. (Basic CSV stays free.)</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon icon-bg-blue">📊</div>
+            <h3>Tax &amp; expense reports</h3>
+            <p>Business-expense and tax summaries, grouped and totalled — ready to hand to your accountant or drop into a self-assessment.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon icon-bg-pink">☁️</div>
+            <h3>Cloud backup &amp; sync</h3>
+            <p>Your receipts are securely backed up to the cloud and kept in sync across your devices. Lose or replace your phone and every receipt is still there — just sign in. <strong style="color:var(--accent);">Included with the monthly and annual plans.</strong></p>
+        </div>
+    </div>
+</div>
+
+<hr class="section-divider" />
+
+<!-- ═══ COMPARISON ═══ -->
+<div class="section section-center">
+    <span class="section-label">Compare</span>
+    <h2 class="section-title">What's in each plan</h2>
+
+    <div style="max-width:820px; margin:32px auto 0; overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.92rem; min-width:560px;">
+            <thead>
+                <tr style="border-bottom:1px solid var(--border-light);">
+                    <th style="text-align:left; padding:14px 12px; color:var(--text-muted); font-weight:600;">Feature</th>
+                    <th style="padding:14px 12px; color:var(--text);">Free</th>
+                    <th style="padding:14px 12px; color:var(--primary-light);">Premium<br /><span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">Monthly / Annual</span></th>
+                    <th style="padding:14px 12px; color:var(--gold);">Lifetime</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Rows)
+                {
+                    <tr style="border-bottom:1px solid var(--border);">
+                        <td style="text-align:left; padding:13px 12px; color:var(--text);">@row.Feature</td>
+                        <td style="text-align:center; padding:13px 12px;">@Mark(row.Free)</td>
+                        <td style="text-align:center; padding:13px 12px;">@Mark(row.Premium)</td>
+                        <td style="text-align:center; padding:13px 12px;">@Mark(row.Lifetime)</td>
+                    </tr>
+                }
+                <tr>
+                    <td style="text-align:left; padding:16px 12px; color:var(--text-muted); font-weight:600;">Price</td>
+                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£0</td>
+                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£2.99/mo<br />£19.99/yr</td>
+                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£39.99<br /><span style="font-size:0.72rem; color:var(--text-muted);">once</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <p style="margin-top:16px; font-size:0.82rem; color:var(--text-muted);">✓ included &nbsp;·&nbsp; — not included</p>
+</div>
+
+<hr class="section-divider" />
+
+<!-- ═══ WHY SYNC IS SUBS ONLY ═══ -->
+<div class="section" style="max-width:780px; margin:0 auto;">
+    <span class="section-label" style="display:block; text-align:center;">Good to know</span>
+    <h2 class="section-title" style="text-align:center;">Why cloud sync is on the subscriptions</h2>
+
+    <div class="help-highlight">
+        <p>Cloud backup means we store and safeguard your receipts on secure servers, for as long as you use it — an <strong>ongoing</strong> service with an ongoing cost. Funding that from a one-time Lifetime payment wouldn't be sustainable, so cloud sync lives on the monthly and annual plans, where an ongoing subscription covers the ongoing service.</p>
+    </div>
+    <p style="color:var(--text-muted);">The <strong>Lifetime</strong> plan is still a great deal if you're happy keeping receipts on your device: it unlocks every on-device premium feature — item scanning, PDF &amp; itemised export, and tax reports — permanently, for a single payment, including features we add in future. You can always add a subscription later if you decide you want cloud backup.</p>
+</div>
+
+<hr class="section-divider" />
+
+<!-- ═══ CTA ═══ -->
+<div class="cta-section" id="download">
+    <h2>Try it free, upgrade anytime</h2>
+    <p>Everything starts free. Unlock Premium from inside the app whenever you're ready — no account required to get going.</p>
+    <div class="cta-actions">
+        <a href="#" class="store-btn store-btn-apple">
+            <span class="store-btn-icon"></span>
+            <span class="store-btn-text">
+                <small>Download on the</small>
+                <span>App Store</span>
+            </span>
+        </a>
+    </div>
+</div>
+
+@code {
+    private record Row(string Feature, bool Free, bool Premium, bool Lifetime);
+
+    private static readonly Row[] Rows =
+    [
+        new("Unlimited receipt scanning",       true,  true,  true),
+        new("On-device text recognition",       true,  true,  true),
+        new("Categories, tags & search",        true,  true,  true),
+        new("CSV export",                        true,  true,  true),
+        new("Automatic line-item scanning",     false, true,  true),
+        new("PDF & itemised export",            false, true,  true),
+        new("Tax & expense reports",            false, true,  true),
+        new("Cloud backup & sync",              false, true,  false),
+    ];
+
+    private static MarkupString Mark(bool on) => on
+        ? new MarkupString("<span style=\"color:var(--accent); font-weight:700;\">✓</span>")
+        : new MarkupString("<span style=\"color:var(--text-subtle);\">—</span>");
+}

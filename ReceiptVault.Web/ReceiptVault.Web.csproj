@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ReceiptVault.Web</RootNamespace>
+    <!-- Bump on each release; shown in the site footer. -->
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <!-- Embed the build time so the footer shows which build is actually live. -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>BuildTime</_Parameter1>
+      <_Parameter2>$([System.DateTime]::UtcNow.ToString("yyyy-MM-dd HH:mm 'UTC'"))</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>
