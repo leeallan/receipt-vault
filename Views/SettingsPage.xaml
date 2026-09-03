@@ -43,18 +43,10 @@
                     <VerticalStackLayout Spacing="14">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <Label Grid.Column="0" Text="☁️" FontSize="18" VerticalOptions="Start"/>
-                            <VerticalStackLayout Grid.Column="1" Spacing="4">
-                                <Label Text="Cloud backup &amp; sync"
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="iCloud backup &amp; sync"
                                        FontSize="14" FontAttributes="Bold" TextColor="White"/>
-                                <Border Stroke="{StaticResource AppMint}" StrokeThickness="1"
-                                        BackgroundColor="#2612D4A0"
-                                        StrokeShape="RoundRectangle 6" Padding="8,3"
-                                        HorizontalOptions="Start">
-                                    <Label Text="MONTHLY &amp; ANNUAL ONLY"
-                                           FontSize="10" FontAttributes="Bold"
-                                           TextColor="{StaticResource AppMint}"/>
-                                </Border>
-                                <Label Text="Your receipts are securely backed up to the cloud and kept in sync across all your devices. Lose or replace your phone and every receipt is still there — just sign in."
+                                <Label Text="Your receipts are backed up to your own iCloud and kept in sync across your devices. Lose or replace your phone and every receipt is still there — just sign in."
                                        FontSize="12" TextColor="#CCCCFF"/>
                             </VerticalStackLayout>
                         </Grid>
@@ -93,7 +85,7 @@
                     <BoxView HeightRequest="1" Color="#33FFFFFF" Margin="0,4"/>
 
                     <Button IsVisible="{Binding IsPremium, Converter={StaticResource InverseBool}}"
-                            Text="Upgrade to Premium"
+                            Text="Unlock Premium"
                             BackgroundColor="White"
                             TextColor="{StaticResource AppIndigo}"
                             FontAttributes="Bold"

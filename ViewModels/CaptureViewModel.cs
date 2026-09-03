@@ -51,43 +51,58 @@ public partial class CaptureViewModel(
     {
         if (photo is null) return;
 
-        // Save a local copy
+        // Write to a temporary file first — we only keep it if it validates as a receipt.
         var imagesDir = Path.Combine(FileSystem.AppDataDirectory, "receipt_images");
         Directory.CreateDirectory(imagesDir);
         var localPath = Path.Combine(imagesDir, $"{Guid.NewGuid()}.jpg");
 
-        using var sourceStream = await photo.OpenReadAsync();
-        using var destStream = File.OpenWrite(localPath);
-        await sourceStream.CopyToAsync(destStream);
+        using (var sourceStream = await photo.OpenReadAsync())
+        using (var destStream = File.OpenWrite(localPath))
+            await sourceStream.CopyToAsync(destStream);
 
-        CapturedImagePath = localPath;
-        HasImage = true;
-
-        await RunOcrAsync(localPath);
-    }
-
-    private async Task RunOcrAsync(string imagePath)
-    {
         IsProcessingOcr = true;
+        OcrResult result;
         try
         {
-            var result = await ocrService.RecognizeReceiptAsync(imagePath);
-            if (result.Success)
-            {
-                Merchant = result.Merchant;
-                TotalText = result.Total?.ToString("F2") ?? string.Empty;
-                Date = result.Date ?? DateTime.Today;
-
-                LineItems.Clear();
-                foreach (var item in result.Items)
-                    LineItems.Add(item);
-                OnPropertyChanged(nameof(HasLineItems));
-            }
+            result = await ocrService.RecognizeReceiptAsync(localPath);
         }
         finally
         {
             IsProcessingOcr = false;
         }
+
+        // Guardrail: only genuine receipts are stored. Anything that doesn't read as a
+        // receipt (or where the receipt doesn't fill the frame) is discarded, not saved.
+        if (!result.Validation.IsLikelyReceipt)
+        {
+            TryDelete(localPath);
+            await Shell.Current.DisplayAlertAsync(
+                "That doesn't look like a receipt",
+                "We couldn't find receipt details in this photo. Make sure the receipt is well-lit and fills most of the frame, then try again.\n\n" +
+                "If you're still having problems, let us know at farabovestudios@gmail.com.",
+                "OK");
+            return;
+        }
+
+        CapturedImagePath = localPath;
+        HasImage = true;
+
+        if (result.Success)
+        {
+            Merchant = result.Merchant;
+            TotalText = result.Total?.ToString("F2") ?? string.Empty;
+            Date = result.Date ?? DateTime.Today;
+
+            LineItems.Clear();
+            foreach (var item in result.Items)
+                LineItems.Add(item);
+            OnPropertyChanged(nameof(HasLineItems));
+        }
+    }
+
+    private static void TryDelete(string path)
+    {
+        try { if (File.Exists(path)) File.Delete(path); } catch { /* best effort */ }
     }
 
     [RelayCommand]

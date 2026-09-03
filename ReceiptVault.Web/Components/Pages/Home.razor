@@ -19,9 +19,7 @@
       "applicationCategory": "FinanceApplication",
       "offers": [
         { "@@type": "Offer", "price": "0", "priceCurrency": "GBP", "description": "Free — unlimited receipt scanning, on-device recognition, CSV export" },
-        { "@@type": "Offer", "price": "2.99", "priceCurrency": "GBP", "description": "Premium Monthly — item scanning, PDF & tax reports, cloud backup & sync" },
-        { "@@type": "Offer", "price": "19.99", "priceCurrency": "GBP", "description": "Premium Annual — everything in Premium, billed yearly" },
-        { "@@type": "Offer", "price": "39.99", "priceCurrency": "GBP", "description": "Premium Lifetime — one-time unlock of all on-device premium features" }
+        { "@@type": "Offer", "price": "4.99", "priceCurrency": "GBP", "description": "Premium — one-time unlock: automatic item scanning, PDF & tax reports, and iCloud backup & sync" }
       ],
       "publisher": { "@@type": "Organization", "name": "Receipt Vault", "url": "https://receiptvault.farabove.uk" }
     }
@@ -40,7 +38,7 @@
         <p class="hero-subtitle">
             Receipt Vault reads your receipts for you — the merchant, the total, and every
             item you bought — and keeps them organised and searchable. Stored privately on
-            your device, with optional cloud backup on the subscription plans.
+            your device, with optional backup to your own iCloud.
         </p>
         <div class="hero-actions" id="download">
             <a href="#" class="store-btn store-btn-apple">
@@ -113,8 +111,8 @@
         </div>
         <div class="feature-card">
             <div class="feature-icon icon-bg-pink">☁️</div>
-            <h3>Cloud backup &amp; sync</h3>
-            <p>On the monthly and annual plans, your receipts are backed up and synced across devices — lose your phone, keep your receipts.</p>
+            <h3>iCloud backup &amp; sync</h3>
+            <p>With Premium, your receipts are backed up to your own iCloud and synced across your devices — lose your phone, keep your receipts.</p>
         </div>
     </div>
 </div>
@@ -151,11 +149,11 @@
 <!-- ═══ PRICING ═══ -->
 <div class="section section-center">
     <span class="section-label">Simple pricing</span>
-    <h2 class="section-title">Free to scan. Upgrade for more.</h2>
-    <p class="section-subtitle">Scanning and organising is free forever. Premium adds automatic item scanning, PDF &amp; tax reports, and — on the subscription plans — cloud backup &amp; sync. <a href="/premium">See the full comparison →</a></p>
+    <h2 class="section-title">Free to scan. Unlock the extras once.</h2>
+    <p class="section-subtitle">Scanning and organising are free forever. A single one-time purchase unlocks automatic item scanning, PDF &amp; tax reports, and iCloud backup &amp; sync. No subscription, no ads, ever. <a href="/premium">See the full comparison →</a></p>
 
     <div style="display:flex; gap:24px; justify-content:center; flex-wrap:wrap; margin-top:40px;">
-        <div class="feature-card" style="flex:1; min-width:240px; max-width:320px;">
+        <div class="feature-card" style="flex:1; min-width:260px; max-width:340px;">
             <div style="font-size:1.1rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Free</div>
             <div style="font-size:2.8rem; font-weight:900; color:var(--text); line-height:1; margin-bottom:4px;">£0</div>
             <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">Free forever — not a trial</div>
@@ -167,34 +165,23 @@
                 <li>✓ &nbsp;No account needed</li>
             </ul>
         </div>
-        <div class="feature-card" style="flex:1; min-width:240px; max-width:320px; border:2px solid var(--primary); position:relative;">
-            <div style="position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; font-size:0.78rem; font-weight:700; padding:4px 14px; border-radius:20px; white-space:nowrap;">MOST POPULAR</div>
+        <div class="feature-card" style="flex:1; min-width:260px; max-width:340px; border:2px solid var(--primary); position:relative;">
+            <div style="position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:var(--primary); color:white; font-size:0.78rem; font-weight:700; padding:4px 14px; border-radius:20px; white-space:nowrap;">ONE-TIME PURCHASE</div>
             <div style="font-size:1.1rem; font-weight:700; color:var(--primary-light); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Premium</div>
-            <div style="font-size:2.8rem; font-weight:900; color:var(--text); line-height:1; margin-bottom:4px;">£2.99<span style="font-size:1rem; color:var(--text-muted); font-weight:600;">/mo</span></div>
-            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">or £19.99/year — save ~45%</div>
+            <div style="font-size:2.8rem; font-weight:900; color:var(--text); line-height:1; margin-bottom:4px;">£4.99</div>
+            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">Pay once. Keep forever.</div>
             <ul style="list-style:none; padding:0; text-align:left; font-size:0.9rem; line-height:2;">
                 <li>✓ &nbsp;Everything in Free</li>
                 <li>✓ &nbsp;Automatic line-item scanning</li>
                 <li>✓ &nbsp;PDF &amp; itemised export</li>
                 <li>✓ &nbsp;Tax &amp; expense reports</li>
-                <li>✓ &nbsp;<strong style="color:var(--accent);">Cloud backup &amp; sync</strong></li>
-            </ul>
-        </div>
-        <div class="feature-card" style="flex:1; min-width:240px; max-width:320px;">
-            <div style="font-size:1.1rem; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:12px;">Lifetime</div>
-            <div style="font-size:2.8rem; font-weight:900; color:var(--text); line-height:1; margin-bottom:4px;">£39.99</div>
-            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">Pay once. Keep forever.</div>
-            <ul style="list-style:none; padding:0; text-align:left; font-size:0.9rem; line-height:2;">
-                <li>✓ &nbsp;Item scanning, forever</li>
-                <li>✓ &nbsp;PDF &amp; itemised export</li>
-                <li>✓ &nbsp;Tax &amp; expense reports</li>
-                <li>✓ &nbsp;All future on-device features</li>
-                <li style="color:var(--text-muted);">– &nbsp;Cloud sync is on the subscriptions</li>
+                <li>✓ &nbsp;<strong style="color:var(--accent);">iCloud backup &amp; sync</strong></li>
+                <li>✓ &nbsp;No subscription. No ads. Ever.</li>
             </ul>
         </div>
     </div>
 
-    <p style="margin-top:24px; font-size:0.85rem; color:var(--text-muted);">Prices are UK pricing. Outside the UK you pay the equivalent tier in your own App Store currency, shown before you buy. Subscriptions renew automatically until cancelled; manage or cancel anytime in your App Store account settings.</p>
+    <p style="margin-top:24px; font-size:0.85rem; color:var(--text-muted);">£4.99 is the UK price — outside the UK you pay the equivalent in your own App Store currency, shown before you buy. iCloud backup uses your own iCloud account.</p>
 </div>
 
 <hr class="section-divider" />
@@ -202,7 +189,7 @@
 <!-- ═══ CTA ═══ -->
 <div class="cta-section">
     <h2>Never lose a receipt again</h2>
-    <p>Download Receipt Vault free — unlimited scanning, no sign-up. Upgrade whenever you want item scanning, reports, and cloud backup.</p>
+    <p>Download Receipt Vault free — unlimited scanning, no sign-up. Unlock item scanning, reports, and iCloud backup with a single one-time purchase whenever you're ready.</p>
     <div class="cta-actions">
         <a href="#" class="store-btn store-btn-apple">
             <span class="store-btn-icon"></span>

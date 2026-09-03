@@ -27,8 +27,8 @@ public partial class SettingsViewModel(
 #endif
 
     public string SubscriptionLabel => IsPremium
-        ? $"Premium — {subscriptionService.ActiveTier} plan"
-        : "Free — unlock cloud sync, PDF & tax reports";
+        ? "Premium — unlocked. Thank you!"
+        : "Free — unlock item scanning, reports & iCloud sync";
 
     public async Task LoadAsync()
     {
@@ -82,32 +82,31 @@ public partial class SettingsViewModel(
         });
     }
 
-    // Interim purchase flow: pick a plan from an action sheet, then buy. Phase 5 replaces
-    // this with a dedicated tiered paywall screen; the billing plumbing stays the same.
+    // One-time unlock: a single non-consumable purchase. Confirm the localized price, buy,
+    // then reload. Phase 5 can dress this up as a proper unlock screen.
     [RelayCommand]
     private async Task UpgradeAsync()
     {
         await RunAsync(async () =>
         {
             var products = await billingService.GetProductsAsync();
-            if (products.Count == 0)
+            var premium = products.FirstOrDefault();
+            if (premium is null)
             {
                 await Shell.Current.DisplayAlertAsync(
                     "Store unavailable",
-                    "Couldn't load the plans right now. Please try again later.",
+                    "Couldn't load Premium right now. Please try again later.",
                     "OK");
                 return;
             }
 
-            var buttons = products.Select(p => $"{p.Title} — {p.LocalizedPrice}").ToArray();
-            var choice = await Shell.Current.DisplayActionSheetAsync(
-                "Choose your plan", "Cancel", null, buttons);
-            if (string.IsNullOrEmpty(choice) || choice == "Cancel") return;
+            var confirm = await Shell.Current.DisplayAlertAsync(
+                "Unlock Premium",
+                $"Unlock automatic item scanning, PDF & tax reports, and iCloud backup & sync for a one-time {premium.LocalizedPrice}.",
+                $"Unlock — {premium.LocalizedPrice}", "Not now");
+            if (!confirm) return;
 
-            var selected = products.FirstOrDefault(p => $"{p.Title} — {p.LocalizedPrice}" == choice);
-            if (selected is null) return;
-
-            var result = await billingService.PurchaseAsync(selected.ProductId);
+            var result = await billingService.PurchaseAsync(premium.ProductId);
             await LoadAsync();
 
             if (IsDebugBuild && !string.IsNullOrEmpty(result.Diagnostics))
@@ -143,7 +142,7 @@ public partial class SettingsViewModel(
                 "Restore purchases",
                 tier == ProductTier.Free
                     ? "No previous purchases were found for this account."
-                    : $"Restored your {tier} plan.",
+                    : "Your Premium unlock has been restored.",
                 "OK");
         });
     }

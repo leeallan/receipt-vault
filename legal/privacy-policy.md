@@ -1,6 +1,6 @@
 <!-- DRAFT TEMPLATE — review with a professional before publishing. Fill every [PLACEHOLDER].
-     If you submit the first release BEFORE Cloud Backup & Sync ships, remove the
-     "Cloud Backup & Sync" section until that feature is live. -->
+     Cloud backup uses the user's OWN iCloud (Apple) — we do not host receipts. The live
+     version of this policy is the site's /privacy page; keep the two in step. -->
 
 # Privacy Policy — Receipt Vault
 
@@ -13,15 +13,15 @@ Receipt Vault ("the app", "we", "us", "our") is provided by [YOUR NAME / COMPANY
 - Your receipts — the photos and the details — are stored **on your device**. Text recognition happens **on your device**; your receipt images are not sent anywhere to be read.
 - We do **not** collect your name, email, or payment details. Purchases are handled by Apple.
 - The only thing our server stores is a record that a purchase is valid — an anonymous Apple transaction identifier and which plan it unlocks. No receipts, no images, no personal details.
-- If you subscribe to a plan that includes **Cloud Backup & Sync**, your receipts are additionally stored in our secure cloud so they sync across your devices. You can delete them at any time.
+- If you buy Premium and enable backup, your receipts are backed up and synced across your devices through **your own iCloud** — we never hold a copy. You can delete them at any time.
 
 ## Information the app handles
 
 **Receipt content (on your device).** Photos you capture, and the details recognised or entered (merchant, total, date, category, line items, notes, tags), are stored locally on your device. Deleting the app removes this local data.
 
-**Purchase and subscription information.** When you buy a subscription or the lifetime unlock, Apple processes the payment. To confirm your purchase is genuine and keep your premium features unlocked, the app sends the purchase's **transaction identifier** to our server, which validates it with Apple and stores the entitlement (the transaction identifier, the product purchased, and whether it is active). This record contains **no name, email, payment details, or receipt content**, and the identifier is not used to track you.
+**Purchase information.** When you buy the one-time Premium unlock, Apple processes the payment. To confirm your purchase is genuine and keep your premium features unlocked, the app sends the purchase's **transaction identifier** to our server, which validates it with Apple and stores the entitlement (the transaction identifier, the product purchased, and whether it is active). This record contains **no name, email, payment details, or receipt content**, and the identifier is not used to track you.
 
-**Cloud Backup & Sync (subscribers only).** If your plan includes Cloud Backup & Sync, your receipt details and images are stored in our cloud so they are backed up and kept in sync across your devices. Images are compressed before upload. This data is associated only with your purchase identity, never sold, and can be deleted by you at any time (see *Retention and deletion*).
+**iCloud Backup & Sync (Premium).** If you buy Premium and turn on backup, your receipts are backed up and kept in sync across your devices through **your own iCloud account** (Apple). We do not store your receipts on our servers and never hold a copy. You control this data in your iCloud settings and can delete it at any time (see *Retention and deletion*).
 
 **Diagnostic information.** The app does not include third‑party analytics or advertising SDKs. Apple may provide us with aggregate, anonymous crash and usage statistics if you have opted in to sharing these with developers in your device settings.
 
@@ -31,12 +31,12 @@ Text recognition (reading the merchant, total, and line items from a receipt) is
 
 ## How we use information
 
-We use the information above only to: provide and operate the app; recognise and organise your receipts; validate purchases and unlock the features you've paid for; and, for subscribers, back up and sync your receipts. We do not sell your information or use it for advertising.
+We use the information above only to: provide and operate the app; recognise and organise your receipts; validate purchases and unlock the features you've paid for; and, if you enable it, back up and sync your receipts through your own iCloud. We do not sell your information or use it for advertising.
 
 ## Third parties
 
-- **Apple** — processes payments, manages subscriptions, and provides the App Store. Apple's handling of your data is governed by Apple's privacy policy.
-- **Microsoft Azure** — hosts our server and, for subscribers, the cloud backup. Data is stored in Azure's **UK West** region. Microsoft acts as our data processor.
+- **Apple** — processes payments, provides the App Store, and provides the iCloud where your backup lives if you enable it. Apple's handling of your data is governed by Apple's privacy policy.
+- **Microsoft Azure** — hosts our purchase-validation server, which stores only anonymous purchase records (never your receipts), in Azure's **UK West** region. Microsoft acts as our data processor.
 
 We do not use advertising networks or data brokers.
 
@@ -48,7 +48,7 @@ All payments are handled by Apple through the App Store. We never receive or sto
 
 - **On-device data** stays until you delete individual receipts or delete the app.
 - **Purchase records** are retained while the entitlement is active and for a reasonable period afterwards to support restores, refunds, and our legal obligations.
-- **Cloud backup data** (subscribers) is retained while your subscription is active. You can delete individual receipts or request deletion of all your cloud data at any time by contacting us at [CONTACT EMAIL]. After cancellation, cloud data is deleted within [e.g. 30] days unless we're required to keep it longer.
+- **iCloud backup data** lives in your own iCloud — you can delete it at any time from within the app or from your iCloud settings, and it is governed by Apple's retention as well.
 
 ## Security
 
@@ -62,7 +62,7 @@ The data controller is [YOUR NAME / COMPANY], contactable at [CONTACT EMAIL].
 
 ## International transfers
 
-Our servers and cloud storage are located in the UK (Azure UK West). If you use the app from outside the UK, your data may be processed in the UK under appropriate safeguards.
+Our purchase-validation server is located in the UK (Azure UK West). iCloud backup is stored by Apple under Apple's own infrastructure and terms. If you use the app from outside the UK, the limited purchase data may be processed in the UK under appropriate safeguards.
 
 ## Children
 

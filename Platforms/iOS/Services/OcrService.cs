@@ -15,18 +15,26 @@ public class OcrService : IOcrService
         return Task.Run(() =>
         {
             var image = UIImage.FromFile(imagePath);
-            if (image?.CGImage is null) return new OcrResult();
+            // A photo we can't even decode isn't a receipt we can store.
+            if (image?.CGImage is null)
+                return new OcrResult { Validation = new ReceiptValidation { IsLikelyReceipt = false } };
 
-            var request = new VNRecognizeTextRequest(completionHandler: null);
-            request.RecognitionLevel = VNRequestTextRecognitionLevel.Accurate;
-            request.UsesLanguageCorrection = true;
+            var textRequest = new VNRecognizeTextRequest(completionHandler: null);
+            textRequest.RecognitionLevel = VNRequestTextRecognitionLevel.Accurate;
+            textRequest.UsesLanguageCorrection = true;
+
+            // Detects the document (receipt) region so we can measure how much of the
+            // frame it fills — an image where the "receipt" is a small part of a larger
+            // scene is rejected.
+            var docRequest = new VNDetectDocumentSegmentationRequest(completionHandler: null);
 
             var handler = new VNImageRequestHandler(image.CGImage, new NSDictionary());
-            handler.Perform([request], out var error);
+            handler.Perform([textRequest, docRequest], out var error);
 
-            if (error is not null || request.Results is null) return new OcrResult();
+            if (error is not null || textRequest.Results is null)
+                return new OcrResult { Validation = new ReceiptValidation { IsLikelyReceipt = false } };
 
-            var observations = request.Results
+            var observations = textRequest.Results
                 .OfType<VNRecognizedTextObservation>()
                 .Select(obs => (
                     Text: obs.TopCandidates(1).FirstOrDefault()?.String ?? "",
@@ -39,8 +47,55 @@ public class OcrService : IOcrService
             // Regroup them into visual rows by vertical position before parsing.
             var lines = GroupIntoRows(observations);
 
-            return ParseReceipt(lines);
+            var result = ParseReceipt(lines);
+
+            var documentCoverage = docRequest.Results?
+                .OfType<VNRectangleObservation>()
+                .Select(r => (double)(r.BoundingBox.Width * r.BoundingBox.Height))
+                .DefaultIfEmpty(0)
+                .Max() ?? 0;
+
+            result.Validation = ValidateReceipt(lines, observations, documentCoverage);
+            return result;
         });
+    }
+
+    // Decides whether the captured image is genuinely a receipt: it must contain
+    // receipt-like text (prices, optionally receipt keywords) AND the receipt must fill
+    // a meaningful share of the frame (a detected document ≥ 50%, or the recognised text
+    // spanning ≥ 50%). This keeps the app from being used to store arbitrary photos.
+    private static ReceiptValidation ValidateReceipt(
+        List<string> lines,
+        List<(string Text, CGRect Box)> observations,
+        double documentCoverage)
+    {
+        var text = string.Join("\n", lines);
+        var priceCount = Regex.Matches(text, @"\d{1,4}[.,]\d{2}\b").Count;
+        var hasKeywords = Regex.IsMatch(text,
+            @"\b(total|sub[\s\-]?total|vat|tax|amount|balance|change|cash|card|receipt|invoice|to pay)\b",
+            RegexOptions.IgnoreCase);
+
+        // Extent of all recognised text as a fraction of the frame.
+        double textCoverage = 0;
+        if (observations.Count > 0)
+        {
+            var minX = observations.Min(o => (double)o.Box.X);
+            var maxX = observations.Max(o => (double)(o.Box.X + o.Box.Width));
+            var minY = observations.Min(o => (double)o.Box.Y);
+            var maxY = observations.Max(o => (double)(o.Box.Y + o.Box.Height));
+            textCoverage = Math.Clamp((maxX - minX) * (maxY - minY), 0, 1);
+        }
+
+        var looksLikeReceipt = priceCount >= 3 || (priceCount >= 2 && hasKeywords);
+        var coverageOk = documentCoverage >= 0.5 || textCoverage >= 0.5;
+
+        return new ReceiptValidation
+        {
+            IsLikelyReceipt = looksLikeReceipt && coverageOk,
+            PriceCount = priceCount,
+            DocumentCoverage = documentCoverage,
+            TextCoverage = textCoverage,
+        };
     }
 
     // Stitches text runs that share a horizontal band back into single logical rows,

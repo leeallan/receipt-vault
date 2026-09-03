@@ -10,8 +10,6 @@ public class PremiumProduct
     public string LocalizedPrice { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-
-    public bool IsSubscription => Tier is ProductTier.Monthly or ProductTier.Annual;
 }
 
 // Outcome of a purchase attempt. Cancellation is distinguished from failure so the UI

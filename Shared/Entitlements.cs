@@ -1,14 +1,10 @@
 namespace ReceiptVault.Shared;
 
-// A purchasable plan. All paid tiers currently unlock the same feature set — they
-// differ only in billing (price / cadence). Kept as distinct values so the paywall,
-// analytics, and any future tier-specific perks have something to key off.
+// The app is free with a single one-time "Premium" unlock (a non-consumable purchase).
 public enum ProductTier
 {
     Free,
-    Monthly,
-    Annual,
-    Lifetime,
+    Premium,
 }
 
 // Individual premium capabilities, gated independently so the free app stays fully
@@ -17,11 +13,11 @@ public enum ProductTier
 public enum Entitlement
 {
     None        = 0,
-    CloudSync   = 1 << 0,  // cloud backup + multi-device sync
+    CloudSync   = 1 << 0,  // iCloud (CloudKit) backup + multi-device sync
     PdfExport   = 1 << 1,  // PDF export (basic CSV stays free)
     TaxReports  = 1 << 2,  // business-expense / tax summary reports
     LineItemOcr = 1 << 3,  // automatic line-item extraction + itemised export
 
-    // The full premium bundle granted by every paid tier today.
+    // The full premium bundle unlocked by the one-time Premium purchase.
     Premium = CloudSync | PdfExport | TaxReports | LineItemOcr,
 }

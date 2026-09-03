@@ -16,27 +16,21 @@ We grant you a personal, non-exclusive, non-transferable, revocable licence to u
 
 ## 2. Your content
 
-Receipts you capture and the details you add are **yours**. We do not claim ownership. If you use Cloud Backup & Sync, you grant us the limited permission needed to store, back up, and sync that content solely to provide the service to you. You are responsible for the content you add and for keeping your own records where required (for example, for tax purposes).
+Receipts you capture and the details you add are **yours**. We do not claim ownership. If you enable iCloud Backup & Sync, that content is stored in **your own iCloud** (Apple) — we do not store it or claim any rights over it. You are responsible for the content you add and for keeping your own records where required (for example, for tax purposes).
 
-## 3. Subscriptions, the lifetime unlock, and billing
+## 3. Purchases and billing
 
-Receipt Vault offers a free tier and paid options:
-
-- **Premium Monthly** and **Premium Annual** are **auto-renewing subscriptions**.
-- **Premium Lifetime** is a **one-time purchase** that unlocks the on-device premium features permanently. **Cloud Backup & Sync is not included with Lifetime** — it is available on the Monthly and Annual plans only, because it involves ongoing service costs.
-
-For subscriptions:
+Receipt Vault is free to use, with a single optional **one-time purchase** ("Premium") that unlocks the premium features permanently, including iCloud Backup & Sync. **There is no subscription.**
 
 - Payment is charged to your Apple Account at confirmation of purchase.
-- **Your subscription renews automatically** unless you cancel at least 24 hours before the end of the current period. Your account is charged for renewal within 24 hours before the period ends.
-- You can **manage or cancel** your subscription at any time in your Apple Account settings. Deleting the app does not cancel a subscription.
-- If we change subscription pricing, Apple will notify you and, where required, seek your consent before the change takes effect.
+- Premium is a non-consumable purchase: you can restore it on your other devices signed in to the same Apple Account.
+- iCloud Backup & Sync uses your own iCloud storage and Apple account, and is subject to Apple's iCloud terms and your available storage.
 
 All purchases are processed by Apple. Refunds are handled by Apple under their policies; we cannot directly issue refunds.
 
 ## 4. Features and availability
 
-We may add, change, or discontinue features over time. We aim to keep the app and its services available but do not guarantee uninterrupted or error-free operation. Cloud Backup & Sync depends on network connectivity and third-party infrastructure.
+We may add, change, or discontinue features over time. We aim to keep the app and its services available but do not guarantee uninterrupted or error-free operation. iCloud Backup & Sync depends on your iCloud account, network connectivity, and Apple's infrastructure.
 
 ## 5. Acceptable use
 

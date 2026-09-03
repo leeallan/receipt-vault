@@ -6,7 +6,7 @@
     <meta name="description" content="What you get with Receipt Vault Premium — automatic line-item scanning, PDF and itemised export, tax & expense reports, and cloud backup & sync on the monthly and annual plans." />
     <link rel="canonical" href="https://receiptvault.farabove.uk/premium" />
     <meta property="og:title" content="Premium — Receipt Vault" />
-    <meta property="og:description" content="Item scanning, PDF & tax reports, and cloud backup & sync. Monthly, annual, or one-time lifetime." />
+    <meta property="og:description" content="Item scanning, PDF & tax reports, and iCloud backup & sync — a single one-time purchase, no subscription." />
     <meta property="og:url" content="https://receiptvault.farabove.uk/premium" />
 </HeadContent>
 
@@ -14,7 +14,7 @@
     <div class="page-hero-content">
         <span class="section-label">Premium</span>
         <h1>More from every receipt</h1>
-        <p>Scanning and organising are free. Premium unlocks the powerful extras — and the subscriptions add cloud backup so your receipts are safe beyond your phone.</p>
+        <p>Scanning and organising are free. One simple purchase unlocks the powerful extras — and backs your receipts up to your own iCloud, safe beyond your phone.</p>
     </div>
 </div>
 
@@ -41,8 +41,8 @@
         </div>
         <div class="feature-card">
             <div class="feature-icon icon-bg-pink">☁️</div>
-            <h3>Cloud backup &amp; sync</h3>
-            <p>Your receipts are securely backed up to the cloud and kept in sync across your devices. Lose or replace your phone and every receipt is still there — just sign in. <strong style="color:var(--accent);">Included with the monthly and annual plans.</strong></p>
+            <h3>iCloud backup &amp; sync</h3>
+            <p>Your receipts are backed up to your own iCloud and kept in sync across your devices. Lose or replace your phone and every receipt is still there — just sign in. <strong style="color:var(--accent);">Included with Premium.</strong></p>
         </div>
     </div>
 </div>
@@ -60,8 +60,7 @@
                 <tr style="border-bottom:1px solid var(--border-light);">
                     <th style="text-align:left; padding:14px 12px; color:var(--text-muted); font-weight:600;">Feature</th>
                     <th style="padding:14px 12px; color:var(--text);">Free</th>
-                    <th style="padding:14px 12px; color:var(--primary-light);">Premium<br /><span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">Monthly / Annual</span></th>
-                    <th style="padding:14px 12px; color:var(--gold);">Lifetime</th>
+                    <th style="padding:14px 12px; color:var(--primary-light);">Premium<br /><span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">one-time</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -71,14 +70,12 @@
                         <td style="text-align:left; padding:13px 12px; color:var(--text);">@row.Feature</td>
                         <td style="text-align:center; padding:13px 12px;">@Mark(row.Free)</td>
                         <td style="text-align:center; padding:13px 12px;">@Mark(row.Premium)</td>
-                        <td style="text-align:center; padding:13px 12px;">@Mark(row.Lifetime)</td>
                     </tr>
                 }
                 <tr>
                     <td style="text-align:left; padding:16px 12px; color:var(--text-muted); font-weight:600;">Price</td>
                     <td style="text-align:center; padding:16px 12px; color:var(--text);">£0</td>
-                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£2.99/mo<br />£19.99/yr</td>
-                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£39.99<br /><span style="font-size:0.72rem; color:var(--text-muted);">once</span></td>
+                    <td style="text-align:center; padding:16px 12px; color:var(--text);">£4.99<br /><span style="font-size:0.72rem; color:var(--text-muted);">once</span></td>
                 </tr>
             </tbody>
         </table>
@@ -88,15 +85,15 @@
 
 <hr class="section-divider" />
 
-<!-- ═══ WHY SYNC IS SUBS ONLY ═══ -->
+<!-- ═══ HOW ICLOUD BACKUP WORKS ═══ -->
 <div class="section" style="max-width:780px; margin:0 auto;">
     <span class="section-label" style="display:block; text-align:center;">Good to know</span>
-    <h2 class="section-title" style="text-align:center;">Why cloud sync is on the subscriptions</h2>
+    <h2 class="section-title" style="text-align:center;">Your backup lives in your iCloud</h2>
 
     <div class="help-highlight">
-        <p>Cloud backup means we store and safeguard your receipts on secure servers, for as long as you use it — an <strong>ongoing</strong> service with an ongoing cost. Funding that from a one-time Lifetime payment wouldn't be sustainable, so cloud sync lives on the monthly and annual plans, where an ongoing subscription covers the ongoing service.</p>
+        <p>Cloud backup uses <strong>your own iCloud account</strong> — your receipts sync privately through Apple's iCloud, not through our servers. That means your data stays in your control, there's no separate account to create, and we never hold a copy of your receipts.</p>
     </div>
-    <p style="color:var(--text-muted);">The <strong>Lifetime</strong> plan is still a great deal if you're happy keeping receipts on your device: it unlocks every on-device premium feature — item scanning, PDF &amp; itemised export, and tax reports — permanently, for a single payment, including features we add in future. You can always add a subscription later if you decide you want cloud backup.</p>
+    <p style="color:var(--text-muted);">Premium is a <strong>single one-time purchase</strong> — no subscription. It unlocks every premium feature permanently, including item scanning, PDF &amp; itemised export, tax reports, and iCloud backup &amp; sync, plus features we add in future.</p>
 </div>
 
 <hr class="section-divider" />
@@ -117,18 +114,18 @@
 </div>
 
 @code {
-    private record Row(string Feature, bool Free, bool Premium, bool Lifetime);
+    private record Row(string Feature, bool Free, bool Premium);
 
     private static readonly Row[] Rows =
     [
-        new("Unlimited receipt scanning",       true,  true,  true),
-        new("On-device text recognition",       true,  true,  true),
-        new("Categories, tags & search",        true,  true,  true),
-        new("CSV export",                        true,  true,  true),
-        new("Automatic line-item scanning",     false, true,  true),
-        new("PDF & itemised export",            false, true,  true),
-        new("Tax & expense reports",            false, true,  true),
-        new("Cloud backup & sync",              false, true,  false),
+        new("Unlimited receipt scanning",       true,  true),
+        new("On-device text recognition",       true,  true),
+        new("Categories, tags & search",        true,  true),
+        new("CSV export",                        true,  true),
+        new("Automatic line-item scanning",     false, true),
+        new("PDF & itemised export",            false, true),
+        new("Tax & expense reports",            false, true),
+        new("iCloud backup & sync",             false, true),
     ];
 
     private static MarkupString Mark(bool on) => on

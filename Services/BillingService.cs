@@ -21,15 +21,11 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
         {
             if (!await Billing.ConnectAsync()) return [];
 
-            var subs = await Billing.GetProductInfoAsync(ItemType.Subscription, ProductCatalog.SubscriptionIds);
-            var oneTime = await Billing.GetProductInfoAsync(ItemType.InAppPurchase, ProductCatalog.NonConsumableIds);
+            var products = await Billing.GetProductInfoAsync(ItemType.InAppPurchase, ProductCatalog.NonConsumableIds);
 
-            var products = (subs ?? []).Concat(oneTime ?? [])
+            return (products ?? [])
                 .Select(ToPremiumProduct)
-                .OrderBy(p => (int)p.Tier)   // Monthly, Annual, Lifetime
                 .ToList();
-
-            return products;
         }
         catch
         {
@@ -108,10 +104,7 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
         {
             if (!await Billing.ConnectAsync()) return subscriptions.ActiveTier;
 
-            var subs = await Billing.GetPurchasesAsync(ItemType.Subscription);
-            var oneTime = await Billing.GetPurchasesAsync(ItemType.InAppPurchase);
-
-            var owned = (subs ?? []).Concat(oneTime ?? [])
+            var owned = (await Billing.GetPurchasesAsync(ItemType.InAppPurchase) ?? [])
                 .Where(p => p.State is PurchaseState.Purchased or PurchaseState.Restored)
                 .ToList();
 
@@ -121,11 +114,8 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
                 return ProductTier.Free;
             }
 
-            // Verify the highest-value entitlement the account owns.
-            var best = owned
-                .OrderByDescending(p => (int)ProductCatalog.TierFor(p.ProductId))
-                .First();
-            return await ResolveTierAsync(best, best.ProductId);
+            var owned_ = owned.First();
+            return await ResolveTierAsync(owned_, owned_.ProductId);
         }
         catch
         {
