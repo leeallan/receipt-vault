@@ -6,12 +6,10 @@ namespace ReceiptVault.Services;
 // Cross-platform in-app purchase wrapper over Plugin.InAppBilling (StoreKit on iOS,
 // Play Billing on Android). Connects on demand and always disconnects afterwards.
 //
-// Entitlements are confirmed server-side when the entitlement server is configured: the
-// signed transaction is sent to the server, which verifies it and returns the authoritative
-// tier. When the server is unconfigured or unreachable, we fall back to the store's own
-// answer so purchasing still works (offline grace / pre-deploy).
-public class BillingService(ISubscriptionService subscriptions, IEntitlementApi entitlementApi)
-    : IBillingService
+// Premium is a single non-consumable purchase, so ownership is tracked by the store: a
+// successful purchase or a Restore is trusted locally. (No entitlement server — for a
+// one-time unlock, Apple's native Restore covers reinstalls and new devices.)
+public class BillingService(ISubscriptionService subscriptions) : IBillingService
 {
     private static IInAppBilling Billing => CrossInAppBilling.Current;
 
@@ -39,16 +37,12 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
 
     public async Task<PurchaseResult> PurchaseAsync(string productId)
     {
-        var itemType = ProductCatalog.IsSubscription(productId)
-            ? ItemType.Subscription
-            : ItemType.InAppPurchase;
-
         try
         {
             if (!await Billing.ConnectAsync())
                 return PurchaseResult.Fail("Couldn't reach the store. Please try again.");
 
-            var purchase = await Billing.PurchaseAsync(productId, itemType);
+            var purchase = await Billing.PurchaseAsync(productId, ItemType.InAppPurchase);
             if (purchase is null)
                 return PurchaseResult.Cancelled_();
 
@@ -58,16 +52,13 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
                 case PurchaseState.Restored:
                     // Acknowledge/finalize so the store doesn't auto-refund after 3 days.
                     await Billing.FinalizePurchaseAsync([purchase.TransactionIdentifier]);
-                    var diagnostics = DescribePurchase(purchase);
-                    var tier = await ResolveTierAsync(purchase, productId);
-                    var result = tier == ProductTier.Free
-                        ? PurchaseResult.Fail("We couldn't confirm your purchase. If you were charged, tap Restore.")
-                        : PurchaseResult.Ok(tier);
-                    return result with { Diagnostics = diagnostics };
+                    var tier = ProductCatalog.TierFor(productId);
+                    subscriptions.SetTier(tier);
+                    return PurchaseResult.Ok(tier);
 
                 case PurchaseState.PaymentPending:
                 case PurchaseState.Deferred:
-                    // e.g. Ask-to-Buy / SCA: entitlement arrives later via restore/notification.
+                    // e.g. Ask-to-Buy / SCA: entitlement arrives later via restore.
                     return PurchaseResult.Fail("Your purchase is pending approval.");
 
                 default:
@@ -108,14 +99,12 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
                 .Where(p => p.State is PurchaseState.Purchased or PurchaseState.Restored)
                 .ToList();
 
-            if (owned.Count == 0)
-            {
-                subscriptions.SetTier(ProductTier.Free);
-                return ProductTier.Free;
-            }
+            var tier = owned.Count == 0
+                ? ProductTier.Free
+                : ProductCatalog.TierFor(owned.First().ProductId);
 
-            var owned_ = owned.First();
-            return await ResolveTierAsync(owned_, owned_.ProductId);
+            subscriptions.SetTier(tier);
+            return tier;
         }
         catch
         {
@@ -125,66 +114,6 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
         {
             await SafeDisconnectAsync();
         }
-    }
-
-    // Confirms a purchase with the entitlement server and applies the resulting tier.
-    // Server (when configured) is authoritative — even a downgrade to Free is honoured, as
-    // that means verification failed. When the server is unconfigured/unreachable we fall
-    // back to the store's own product id so the user isn't blocked.
-    private async Task<ProductTier> ResolveTierAsync(InAppBillingPurchase purchase, string productId)
-    {
-        var localTier = ProductCatalog.TierFor(productId);
-
-        if (!entitlementApi.IsConfigured)
-        {
-            subscriptions.SetTier(localTier);
-            return localTier;
-        }
-
-        var platform = DeviceInfo.Current.Platform == DevicePlatform.iOS
-            ? StorePlatform.Apple
-            : StorePlatform.Google;
-
-        // Apple: send the transaction id — the server fetches the signed transaction (JWS)
-        // from Apple's App Store Server API (Plugin.InAppBilling is StoreKit 1 and can't
-        // hand us a JWS). Google: product id + purchase token.
-        var request = platform == StorePlatform.Apple
-            ? new VerifyEntitlementRequest(platform, TransactionId: purchase.TransactionIdentifier)
-            : new VerifyEntitlementRequest(platform, ProductId: productId, PurchaseToken: purchase.PurchaseToken);
-
-        var response = await entitlementApi.VerifyAsync(request);
-
-        // Unreachable → offline grace: trust the store locally this session.
-        var tier = response?.Tier ?? localTier;
-        subscriptions.SetTier(tier);
-        return tier;
-    }
-
-    // Diagnostic for sandbox testing: works out whether the store handed us Apple's
-    // StoreKit 2 signed transaction (a JWS — three base64url parts, header starts "eyJ")
-    // in PurchaseToken, which is what we forward to the server for verification.
-    private static string DescribePurchase(InAppBillingPurchase p)
-    {
-        var token = p.PurchaseToken ?? string.Empty;
-        var dots = token.Count(c => c == '.');
-        var head = token.Length > 20 ? token[..20] : token;
-        var looksJws = token.StartsWith("eyJ", StringComparison.Ordinal) && dots == 2;
-
-#if DEBUG
-        // Full token to the debug console for anyone able to read device logs.
-        System.Diagnostics.Debug.WriteLine($"[IAP] PurchaseToken (len {token.Length}): {token}");
-#endif
-
-        return
-            $"Product: {p.ProductId}\n" +
-            $"State: {p.State}\n" +
-            $"TxnId: {p.TransactionIdentifier}\n" +
-            $"OrigTxnId: {p.OriginalTransactionIdentifier}\n" +
-            $"PurchaseToken: len={token.Length}, dots={dots}\n" +
-            $"head='{head}'\n" +
-            $"Verdict: {(looksJws
-                ? "PurchaseToken IS the StoreKit 2 JWS ✓"
-                : "PurchaseToken is NOT a JWS (receipt/other) — JWS field TBD")}";
     }
 
     private static PremiumProduct ToPremiumProduct(InAppBillingProduct p) => new()
@@ -201,7 +130,7 @@ public class BillingService(ISubscriptionService subscriptions, IEntitlementApi 
         PurchaseError.PaymentNotAllowed => "Payments aren't allowed on this device.",
         PurchaseError.BillingUnavailable or PurchaseError.ServiceUnavailable
             or PurchaseError.AppStoreUnavailable => "The store is unavailable right now.",
-        PurchaseError.ItemUnavailable or PurchaseError.InvalidProduct => "That plan isn't available.",
+        PurchaseError.ItemUnavailable or PurchaseError.InvalidProduct => "That purchase isn't available.",
         _ => "Something went wrong with the purchase. Please try again.",
     };
 

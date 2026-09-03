@@ -52,13 +52,10 @@
 	     MAUI app's default source globbing so their files aren't compiled into the app. -->
 	<ItemGroup>
 		<Compile Remove="Shared\**" />
-		<Compile Remove="Server\**" />
 		<Compile Remove="ReceiptVault.Web\**" />
 		<None Remove="Shared\**" />
-		<None Remove="Server\**" />
 		<None Remove="ReceiptVault.Web\**" />
 		<MauiXaml Remove="Shared\**" />
-		<MauiXaml Remove="Server\**" />
 		<MauiXaml Remove="ReceiptVault.Web\**" />
 	</ItemGroup>
 

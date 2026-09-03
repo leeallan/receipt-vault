@@ -6,7 +6,7 @@ namespace ReceiptVault.Shared;
 public static class ProductCatalog
 {
     // One-time, non-consumable "Premium" unlock.
-    public const string Premium = "com.farabove.receiptvault.premium";
+    public const string Premium = "com.farabove.receiptvault.premium.lifetime";
 
     public static readonly string[] NonConsumableIds = [Premium];
 

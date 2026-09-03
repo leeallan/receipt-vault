@@ -109,9 +109,6 @@ public partial class SettingsViewModel(
             var result = await billingService.PurchaseAsync(premium.ProductId);
             await LoadAsync();
 
-            if (IsDebugBuild && !string.IsNullOrEmpty(result.Diagnostics))
-                await Shell.Current.DisplayAlertAsync("Purchase details (debug)", result.Diagnostics, "OK");
-
             if (result.Success)
                 await Shell.Current.DisplayAlertAsync(
                     "Welcome to Premium", "Thanks! Your premium features are now unlocked.", "OK");
