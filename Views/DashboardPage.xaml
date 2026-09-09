@@ -14,7 +14,9 @@
         <conv:InverseBoolConverter x:Key="InverseBool"/>
     </ContentPage.Resources>
 
-    <ScrollView>
+    <Grid>
+
+      <ScrollView>
         <VerticalStackLayout Spacing="0">
 
             <!-- Safe-area top padding -->
@@ -41,13 +43,29 @@
                         BackgroundColor="{StaticResource AppSurface}"
                         TextColor="{StaticResource AppTextPrimary}"
                         Command="{Binding PreviousMonthCommand}"/>
-                <Label Grid.Column="1"
-                       Text="{Binding CurrentMonthLabel}"
-                       FontSize="15"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource AppTextSecondary}"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"/>
+                <Border Grid.Column="1"
+                        BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="16,0"
+                        HeightRequest="40"
+                        HorizontalOptions="Center"
+                        VerticalOptions="Center">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenMonthPickerCommand}"/>
+                    </Border.GestureRecognizers>
+                    <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                        <Label Text="{Binding CurrentMonthLabel}"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource AppTextPrimary}"
+                               VerticalOptions="Center"/>
+                        <Label Text="▾"
+                               FontSize="13"
+                               TextColor="{StaticResource AppTextSecondary}"
+                               VerticalOptions="Center"/>
+                    </HorizontalStackLayout>
+                </Border>
                 <Button Grid.Column="2"
                         Text="›"
                         FontSize="20"
@@ -188,6 +206,107 @@
             </VerticalStackLayout>
 
         </VerticalStackLayout>
-    </ScrollView>
+      </ScrollView>
+
+      <!-- Month / year picker overlay -->
+      <Grid IsVisible="{Binding IsMonthPickerOpen}">
+
+          <!-- Scrim: its own view so taps on the card below don't dismiss the picker -->
+          <BoxView Color="#D00D0D1A">
+              <BoxView.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding CloseMonthPickerCommand}"/>
+              </BoxView.GestureRecognizers>
+          </BoxView>
+
+          <Border Margin="32"
+                  VerticalOptions="Center"
+                  BackgroundColor="{StaticResource AppSurfaceVariant}"
+                  StrokeThickness="1"
+                  Stroke="{StaticResource AppBorder}"
+                  StrokeShape="RoundRectangle 20">
+              <VerticalStackLayout Padding="20" Spacing="16">
+
+                  <!-- Year navigator -->
+                  <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                      <Button Grid.Column="0"
+                              Text="‹"
+                              FontSize="20"
+                              Padding="0"
+                              WidthRequest="40" HeightRequest="40"
+                              CornerRadius="12"
+                              BackgroundColor="{StaticResource AppSurface}"
+                              TextColor="{StaticResource AppTextPrimary}"
+                              Command="{Binding PickerPreviousYearCommand}"/>
+                      <Label Grid.Column="1"
+                             Text="{Binding PickerYearLabel}"
+                             FontSize="18"
+                             FontAttributes="Bold"
+                             TextColor="{StaticResource AppTextPrimary}"
+                             HorizontalOptions="Center"
+                             VerticalOptions="Center"/>
+                      <Button Grid.Column="2"
+                              Text="›"
+                              FontSize="20"
+                              Padding="0"
+                              WidthRequest="40" HeightRequest="40"
+                              CornerRadius="12"
+                              BackgroundColor="{StaticResource AppSurface}"
+                              TextColor="{StaticResource AppTextPrimary}"
+                              IsEnabled="{Binding CanPickerGoNextYear}"
+                              Command="{Binding PickerNextYearCommand}"/>
+                  </Grid>
+
+                  <!-- Month grid -->
+                  <CollectionView ItemsSource="{Binding MonthCells}"
+                                  HeightRequest="232"
+                                  SelectionMode="None">
+                      <CollectionView.ItemsLayout>
+                          <GridItemsLayout Orientation="Vertical" Span="3"/>
+                      </CollectionView.ItemsLayout>
+                      <CollectionView.ItemTemplate>
+                          <DataTemplate x:DataType="vm:MonthCell">
+                              <Border Margin="4"
+                                      HeightRequest="50"
+                                      BackgroundColor="{StaticResource AppSurface}"
+                                      StrokeThickness="0"
+                                      StrokeShape="RoundRectangle 12">
+                                  <Border.Triggers>
+                                      <DataTrigger TargetType="Border"
+                                                   Binding="{Binding IsSelected}" Value="True">
+                                          <Setter Property="BackgroundColor" Value="{StaticResource AppIndigo}"/>
+                                      </DataTrigger>
+                                      <DataTrigger TargetType="Border"
+                                                   Binding="{Binding IsAvailable}" Value="False">
+                                          <Setter Property="Opacity" Value="0.3"/>
+                                      </DataTrigger>
+                                  </Border.Triggers>
+                                  <Border.GestureRecognizers>
+                                      <TapGestureRecognizer
+                                          Command="{Binding Source={RelativeSource AncestorType={x:Type vm:DashboardViewModel}}, Path=SelectMonthCommand}"
+                                          CommandParameter="{Binding .}"/>
+                                  </Border.GestureRecognizers>
+                                  <Label Text="{Binding Label}"
+                                         FontSize="15"
+                                         TextColor="{StaticResource AppTextPrimary}"
+                                         HorizontalOptions="Center"
+                                         VerticalOptions="Center"/>
+                              </Border>
+                          </DataTemplate>
+                      </CollectionView.ItemTemplate>
+                  </CollectionView>
+
+                  <Button Text="Cancel"
+                          HeightRequest="46"
+                          CornerRadius="12"
+                          BackgroundColor="{StaticResource AppSurface}"
+                          TextColor="{StaticResource AppTextSecondary}"
+                          FontSize="15"
+                          Command="{Binding CloseMonthPickerCommand}"/>
+
+              </VerticalStackLayout>
+          </Border>
+      </Grid>
+
+    </Grid>
 
 </ContentPage>

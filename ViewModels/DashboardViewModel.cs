@@ -25,7 +25,9 @@ public partial class DashboardViewModel(IReceiptService receiptService) : BaseVi
     public string CurrentMonthLabel => SelectedMonth.ToString("MMMM yyyy");
 
     // Don't let the user page into months that haven't happened yet.
-    public bool CanGoNext => SelectedMonth < new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    public bool CanGoNext => SelectedMonth < ThisMonth;
+
+    private static DateTime ThisMonth => new(DateTime.Today.Year, DateTime.Today.Month, 1);
 
     [ObservableProperty]
     private ObservableCollection<Receipt> recentReceipts = [];
@@ -66,6 +68,73 @@ public partial class DashboardViewModel(IReceiptService receiptService) : BaseVi
         SelectedMonth = SelectedMonth.AddMonths(1);
         await LoadAsync();
     }
+
+    // ---- Month / year picker -------------------------------------------------
+    // The ‹ › arrows only step one month at a time, which gets painful once there's
+    // a year or two of history. Tapping the month label opens a jump-anywhere grid.
+
+    [ObservableProperty]
+    private bool isMonthPickerOpen;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PickerYearLabel))]
+    [NotifyPropertyChangedFor(nameof(CanPickerGoNextYear))]
+    private int pickerYear = DateTime.Today.Year;
+
+    public string PickerYearLabel => PickerYear.ToString();
+
+    public bool CanPickerGoNextYear => PickerYear < DateTime.Today.Year;
+
+    [ObservableProperty]
+    private ObservableCollection<MonthCell> monthCells = [];
+
+    partial void OnPickerYearChanged(int value) => BuildMonthCells();
+
+    private void BuildMonthCells()
+    {
+        var thisMonth = ThisMonth;
+        MonthCells = new ObservableCollection<MonthCell>(
+            Enumerable.Range(1, 12).Select(m => new MonthCell
+            {
+                Year = PickerYear,
+                Month = m,
+                IsAvailable = new DateTime(PickerYear, m, 1) <= thisMonth,
+                IsSelected = PickerYear == SelectedMonth.Year && m == SelectedMonth.Month
+            }));
+    }
+
+    [RelayCommand]
+    private void OpenMonthPicker()
+    {
+        PickerYear = SelectedMonth.Year;
+        // Setting PickerYear only rebuilds the grid when the value actually changes,
+        // so build unconditionally to pick up a new selection within the same year.
+        BuildMonthCells();
+        IsMonthPickerOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseMonthPicker() => IsMonthPickerOpen = false;
+
+    [RelayCommand]
+    private void PickerPreviousYear() => PickerYear--;
+
+    [RelayCommand]
+    private void PickerNextYear()
+    {
+        if (CanPickerGoNextYear) PickerYear++;
+    }
+
+    [RelayCommand]
+    private async Task SelectMonthAsync(MonthCell cell)
+    {
+        if (!cell.IsAvailable) return;
+        SelectedMonth = new DateTime(cell.Year, cell.Month, 1);
+        IsMonthPickerOpen = false;
+        await LoadAsync();
+    }
+
+    // ---- Navigation ----------------------------------------------------------
 
     [RelayCommand]
     private async Task NavigateToCaptureAsync()
