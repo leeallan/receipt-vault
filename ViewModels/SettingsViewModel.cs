@@ -66,6 +66,18 @@ public partial class SettingsViewModel(
         await LoadAsync();
     }
 
+    // Debug-only: surfaces exactly what the store returns for a restore query, so we can see
+    // whether StoreKit reports the sandbox purchase (and under which product id/state).
+    [RelayCommand]
+    private async Task DiagnoseRestoreAsync()
+    {
+        await RunAsync(async () =>
+        {
+            var report = await billingService.DiagnoseRestoreAsync();
+            await Shell.Current.DisplayAlertAsync("Restore diagnostics", report, "OK");
+        });
+    }
+
     [RelayCommand]
     private async Task RestorePurchasesAsync()
     {

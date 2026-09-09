@@ -31,4 +31,9 @@ public interface IBillingService
 
     // Restores prior purchases and returns the highest owned tier.
     Task<ProductTier> RestoreAsync();
+
+    // Debug-only: runs the same restore query but returns a human-readable report of what
+    // the store returned (connection, purchase count, product ids/states, or the error) so
+    // sandbox "no purchases found" issues can be diagnosed on-device.
+    Task<string> DiagnoseRestoreAsync();
 }

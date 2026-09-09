@@ -102,6 +102,16 @@
                     HeightRequest="44"
                     Command="{Binding ResetEntitlementCommand}"/>
 
+            <!-- Debug-only: show exactly what the store returns for a restore query -->
+            <Button IsVisible="{Binding IsDebugBuild}"
+                    Text="Diagnose restore (debug)"
+                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                    TextColor="{StaticResource AppTextSecondary}"
+                    FontSize="13"
+                    CornerRadius="12"
+                    HeightRequest="44"
+                    Command="{Binding DiagnoseRestoreCommand}"/>
+
             <!-- Export section -->
             <Label Text="Export"
                    FontSize="13" FontAttributes="Bold"

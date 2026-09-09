@@ -99,9 +99,12 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
                 .Where(p => p.State is PurchaseState.Purchased or PurchaseState.Restored)
                 .ToList();
 
-            var tier = owned.Count == 0
-                ? ProductTier.Free
-                : ProductCatalog.TierFor(owned.First().ProductId);
+            // Premium is owned if ANY owned purchase maps to it — don't just inspect the
+            // first transaction. The store can return purchases in any order, and sandbox
+            // accounts accumulate legacy/unrelated product ids that map to Free.
+            var tier = owned.Any(p => ProductCatalog.TierFor(p.ProductId) != ProductTier.Free)
+                ? ProductTier.Premium
+                : ProductTier.Free;
 
             subscriptions.SetTier(tier);
             return tier;
@@ -109,6 +112,37 @@ public class BillingService(ISubscriptionService subscriptions) : IBillingServic
         catch
         {
             return subscriptions.ActiveTier;
+        }
+        finally
+        {
+            await SafeDisconnectAsync();
+        }
+    }
+
+    public async Task<string> DiagnoseRestoreAsync()
+    {
+        try
+        {
+            var connected = await Billing.ConnectAsync();
+            if (!connected) return "ConnectAsync returned FALSE — could not reach the store.";
+
+            var all = (await Billing.GetPurchasesAsync(ItemType.InAppPurchase) ?? []).ToList();
+
+            var lines = new List<string> { $"Connected: true", $"Purchases returned: {all.Count}" };
+            foreach (var p in all)
+                lines.Add($"• {p.ProductId} | {p.State} | txn={p.TransactionIdentifier}");
+
+            var owned = all
+                .Where(p => p.State is PurchaseState.Purchased or PurchaseState.Restored)
+                .ToList();
+            lines.Add($"Owned (Purchased/Restored): {owned.Count}");
+            lines.Add($"Expecting id: {ProductCatalog.Premium}");
+
+            return string.Join("\n", lines);
+        }
+        catch (Exception ex)
+        {
+            return $"EXCEPTION: {ex.GetType().Name}\n{ex.Message}";
         }
         finally
         {
