@@ -111,35 +111,19 @@
             <Border BackgroundColor="{StaticResource AppSurface}"
                     StrokeThickness="1" Stroke="{StaticResource AppBorder}"
                     StrokeShape="RoundRectangle 16">
-                <VerticalStackLayout>
-                    <Button Text="Export this month to CSV"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource AppTextPrimary}"
-                            HorizontalOptions="Fill"
-                            HeightRequest="52"
-                            Command="{Binding ExportMonthCommand}"/>
-                    <BoxView HeightRequest="1" Color="{StaticResource AppBorder}" Margin="16,0"/>
-                    <Button Text="Export all receipts to CSV"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource AppTextPrimary}"
-                            HorizontalOptions="Fill"
-                            HeightRequest="52"
-                            Command="{Binding ExportAllCommand}"/>
-                    <BoxView HeightRequest="1" Color="{StaticResource AppBorder}" Margin="16,0"/>
-                    <Button Text="Export all to PDF"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource AppTextPrimary}"
-                            HorizontalOptions="Fill"
-                            HeightRequest="52"
-                            Command="{Binding ExportPdfCommand}"/>
-                    <BoxView HeightRequest="1" Color="{StaticResource AppBorder}" Margin="16,0"/>
-                    <Button Text="Tax &amp; expense report (PDF)"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource AppTextPrimary}"
-                            HorizontalOptions="Fill"
-                            HeightRequest="52"
-                            Command="{Binding TaxReportCommand}"/>
-                </VerticalStackLayout>
+                <Grid ColumnDefinitions="*,Auto" Padding="16,0" HeightRequest="56">
+                    <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Spacing="2">
+                        <Label Text="Export receipts &amp; reports"
+                               FontSize="15" TextColor="{StaticResource AppTextPrimary}"/>
+                        <Label Text="Spreadsheet, PDF or tax report — pick a date range"
+                               FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                    </VerticalStackLayout>
+                    <Label Grid.Column="1" Text="›" FontSize="22"
+                           TextColor="{StaticResource AppTextSecondary}" VerticalOptions="Center"/>
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding OpenExportCommand}"/>
+                    </Grid.GestureRecognizers>
+                </Grid>
             </Border>
 
             <!-- Preferences -->

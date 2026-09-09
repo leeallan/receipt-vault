@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ReceiptVault.Views.ExportPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{StaticResource AppBackground}">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Top nav -->
+        <Grid Grid.Row="0" Padding="24,60,24,16" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Button Grid.Column="0"
+                    Text="←"
+                    FontSize="20"
+                    TextColor="{StaticResource AppTextSecondary}"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    CornerRadius="12"
+                    WidthRequest="44" HeightRequest="44"
+                    Padding="0"
+                    Clicked="OnBackClicked"/>
+            <Label Grid.Column="1"
+                   Text="Export"
+                   FontSize="22" FontAttributes="Bold"
+                   TextColor="{StaticResource AppTextPrimary}"
+                   VerticalOptions="Center"/>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="24,0,24,32" Spacing="24">
+
+                <!-- Quick range presets -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="QUICK RANGE" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource AppTextSecondary}"/>
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="8">
+                            <Button Text="This month" FontSize="13" Padding="14,0" HeightRequest="38"
+                                    CornerRadius="19"
+                                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                    TextColor="{StaticResource AppTextPrimary}"
+                                    Command="{Binding QuickRangeCommand}" CommandParameter="ThisMonth"/>
+                            <Button Text="Last month" FontSize="13" Padding="14,0" HeightRequest="38"
+                                    CornerRadius="19"
+                                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                    TextColor="{StaticResource AppTextPrimary}"
+                                    Command="{Binding QuickRangeCommand}" CommandParameter="LastMonth"/>
+                            <Button Text="This year" FontSize="13" Padding="14,0" HeightRequest="38"
+                                    CornerRadius="19"
+                                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                    TextColor="{StaticResource AppTextPrimary}"
+                                    Command="{Binding QuickRangeCommand}" CommandParameter="ThisYear"/>
+                            <Button Text="All time" FontSize="13" Padding="14,0" HeightRequest="38"
+                                    CornerRadius="19"
+                                    BackgroundColor="{StaticResource AppSurfaceVariant}"
+                                    TextColor="{StaticResource AppTextPrimary}"
+                                    Command="{Binding QuickRangeCommand}" CommandParameter="All"/>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+                </VerticalStackLayout>
+
+                <!-- Date range -->
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="DATE RANGE" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource AppTextSecondary}"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <VerticalStackLayout Grid.Column="0" Spacing="6">
+                            <Label Text="From" FontSize="12" TextColor="{StaticResource AppTextMuted}"/>
+                            <Border BackgroundColor="{StaticResource AppSurface}"
+                                    StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                                    StrokeShape="RoundRectangle 12" Padding="12,4">
+                                <DatePicker Date="{Binding FromDate}"
+                                            MaximumDate="{x:Static sys:DateTime.Today}"
+                                            Format="dd MMM yyyy"
+                                            TextColor="{StaticResource AppTextPrimary}"/>
+                            </Border>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                            <Label Text="To" FontSize="12" TextColor="{StaticResource AppTextMuted}"/>
+                            <Border BackgroundColor="{StaticResource AppSurface}"
+                                    StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                                    StrokeShape="RoundRectangle 12" Padding="12,4">
+                                <DatePicker Date="{Binding ToDate}"
+                                            MaximumDate="{x:Static sys:DateTime.Today}"
+                                            Format="dd MMM yyyy"
+                                            TextColor="{StaticResource AppTextPrimary}"/>
+                            </Border>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+
+                <!-- Itemised toggle -->
+                <Border BackgroundColor="{StaticResource AppSurface}"
+                        StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                        StrokeShape="RoundRectangle 12" Padding="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="Itemised breakdown" FontSize="15"
+                                       TextColor="{StaticResource AppTextPrimary}"/>
+                                <Label Text="Include every scanned line item under each receipt."
+                                       FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="1"
+                                    IsToggled="{Binding Itemised}"
+                                    IsEnabled="{Binding IsPremium}"
+                                    OnColor="{StaticResource AppMint}"
+                                    VerticalOptions="Center"/>
+                        </Grid>
+                        <Label IsVisible="{Binding IsFree}"
+                               Text="🔒 Free export is a plain CSV. Unlock Premium for the formatted spreadsheet with itemised rows — tap to unlock."
+                               FontSize="12" TextColor="{StaticResource AppMint}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding UnlockCommand}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Colour key (describes the styled XLSX — Premium only) -->
+                <VerticalStackLayout Spacing="10" IsVisible="{Binding IsPremium}">
+                    <Label Text="SPREADSHEET COLOUR KEY" FontSize="12" FontAttributes="Bold"
+                           TextColor="{StaticResource AppTextSecondary}"/>
+                    <Border BackgroundColor="{StaticResource AppSurface}"
+                            StrokeThickness="1" Stroke="{StaticResource AppBorder}"
+                            StrokeShape="RoundRectangle 12" Padding="16">
+                        <VerticalStackLayout Spacing="10">
+                            <HorizontalStackLayout Spacing="10">
+                                <BoxView Color="#6C63FF" WidthRequest="14" HeightRequest="14" CornerRadius="3" VerticalOptions="Center"/>
+                                <Label Text="Header" FontSize="13" TextColor="{StaticResource AppTextSecondary}" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10">
+                                <BoxView Color="#EEECFF" WidthRequest="14" HeightRequest="14" CornerRadius="3" VerticalOptions="Center"/>
+                                <Label Text="Business expense" FontSize="13" TextColor="{StaticResource AppTextSecondary}" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10">
+                                <BoxView Color="#F4F4F7" WidthRequest="14" HeightRequest="14" CornerRadius="3" VerticalOptions="Center"/>
+                                <Label Text="Line item" FontSize="13" TextColor="{StaticResource AppTextSecondary}" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="10">
+                                <BoxView Color="#D7F7EE" WidthRequest="14" HeightRequest="14" CornerRadius="3" VerticalOptions="Center"/>
+                                <Label Text="Totals" FontSize="13" TextColor="{StaticResource AppTextSecondary}" VerticalOptions="Center"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Actions -->
+                <VerticalStackLayout Spacing="12">
+                    <Button Text="{Binding SpreadsheetButtonText}"
+                            BackgroundColor="{StaticResource AppIndigo}"
+                            TextColor="White" FontAttributes="Bold"
+                            CornerRadius="14" HeightRequest="52"
+                            Command="{Binding ExportSpreadsheetCommand}"/>
+                    <Button Text="Export PDF"
+                            BackgroundColor="{StaticResource AppSurfaceVariant}"
+                            TextColor="{StaticResource AppTextPrimary}"
+                            CornerRadius="14" HeightRequest="52"
+                            Command="{Binding ExportPdfCommand}"/>
+                    <Button Text="Tax &amp; expense report (PDF)"
+                            BackgroundColor="{StaticResource AppSurfaceVariant}"
+                            TextColor="{StaticResource AppTextPrimary}"
+                            CornerRadius="14" HeightRequest="52"
+                            Command="{Binding TaxReportCommand}"/>
+                </VerticalStackLayout>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="{StaticResource AppIndigo}"
+                                   HorizontalOptions="Center"/>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

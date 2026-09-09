@@ -70,4 +70,8 @@ public partial class ReceiptsListViewModel(IReceiptService receiptService) : Bas
     [RelayCommand]
     private async Task NavigateToCaptureAsync() =>
         await Shell.Current.GoToAsync("CapturePage");
+
+    [RelayCommand]
+    private async Task OpenExportAsync() =>
+        await Shell.Current.GoToAsync("ExportPage");
 }

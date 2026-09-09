@@ -158,9 +158,22 @@ public partial class ReceiptDetailViewModel(
     {
         if (Receipt is null) return;
 
-        var items = new Dictionary<int, List<LineItem>> { [Receipt.Id] = [.. LineItems] };
-        var filePath = await exportService.ExportToCsvAsync(
-            [Receipt], $"receipt_{Receipt.Date:yyyy-MM-dd}_{Receipt.Merchant}", items);
+        var safeMerchant = string.Concat($"{Receipt.Merchant}".Split(Path.GetInvalidFileNameChars()));
+        var name = $"receipt_{Receipt.Date:yyyy-MM-dd}_{safeMerchant}";
+        var date = Receipt.Date.Date;
+
+        // Free tier shares a plain CSV; Premium gets the styled, itemised spreadsheet.
+        string filePath;
+        if (IsPremium)
+        {
+            var items = new Dictionary<int, List<LineItem>> { [Receipt.Id] = [.. LineItems] };
+            filePath = await exportService.ExportToXlsxAsync([Receipt], name, items, date, date);
+        }
+        else
+        {
+            filePath = await exportService.ExportToCsvAsync([Receipt], name, date, date);
+        }
+
         await exportService.ShareFileAsync(filePath);
     }
 }

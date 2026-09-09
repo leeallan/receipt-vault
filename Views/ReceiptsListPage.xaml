@@ -18,13 +18,23 @@
         <BoxView Grid.Row="0" HeightRequest="60" Color="Transparent"/>
 
         <!-- Header -->
-        <Grid Grid.Row="1" Padding="24,0,24,16" ColumnDefinitions="*,Auto">
+        <Grid Grid.Row="1" Padding="24,0,24,16" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
             <Label Grid.Column="0"
                    Text="Receipts"
                    FontSize="28"
                    FontAttributes="Bold"
-                   TextColor="{StaticResource AppTextPrimary}"/>
+                   TextColor="{StaticResource AppTextPrimary}"
+                   VerticalOptions="Center"/>
             <Button Grid.Column="1"
+                    Text="↥ Export"
+                    FontSize="14"
+                    Padding="14,0"
+                    HeightRequest="44"
+                    CornerRadius="12"
+                    BackgroundColor="{StaticResource AppSurface}"
+                    TextColor="{StaticResource AppTextPrimary}"
+                    Command="{Binding OpenExportCommand}"/>
+            <Button Grid.Column="2"
                     Text="+"
                     FontSize="24"
                     WidthRequest="44" HeightRequest="44"

@@ -37,6 +37,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ReceiptDetailViewModel>();
         builder.Services.AddTransient<BudgetViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<ExportViewModel>();
 
         // Pages
         builder.Services.AddTransient<DashboardPage>();
@@ -45,6 +46,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ReceiptDetailPage>();
         builder.Services.AddTransient<BudgetPage>();
         builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddTransient<ExportPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

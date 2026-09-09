@@ -47,7 +47,7 @@ public class PdfService : IPdfService
                 y = Margin;
             }
 
-            float Measure(string text, UIFont font, float width)
+            float Measure(string? text, UIFont font, float width)
             {
                 var attrs = new UIStringAttributes { Font = font };
                 var size = new NSString(text ?? "").GetBoundingRect(

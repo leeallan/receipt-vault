@@ -42,5 +42,9 @@
 	<!-- Dark mode appearance -->
 	<key>UIUserInterfaceStyle</key>
 	<string>Dark</string>
+
+	<!-- Export compliance: only standard/exempt encryption (HTTPS) is used -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
