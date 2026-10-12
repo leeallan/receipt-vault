@@ -10,7 +10,8 @@ public partial class CaptureViewModel(
     IOcrService ocrService,
     IReceiptService receiptService,
     ISubscriptionService subscriptionService,
-    IBillingService billingService) : BaseViewModel
+    IBillingService billingService,
+    IReviewPromptService reviewPromptService) : BaseViewModel
 {
     [ObservableProperty] private string? capturedImagePath;
     [ObservableProperty] private string merchant = string.Empty;
@@ -190,6 +191,7 @@ public partial class CaptureViewModel(
         await receiptService.SaveLineItemsAsync(receipt.Id, LineItems);
 
         await Shell.Current.GoToAsync("..");
+        _ = reviewPromptService.OnReceiptSavedAsync();
     }
 
     [RelayCommand]

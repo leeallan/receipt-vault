@@ -4,19 +4,40 @@ Ready-to-paste copy for App Store Connect. Character limits noted in (brackets).
 
 ---
 
-## App Name (30)
+## Search fields — v1.0.1 (ASO rework, 2026-10-11)
+Apple indexes **title + subtitle + keywords** together per localisation, so never repeat a
+word across the three (wasted characters). Plurals are handled automatically.
+Each storefront reads its own localisation: UK store → English (UK); US store → English (US)
+**and** Spanish (Mexico), which gives US a second 100-char keyword field.
+
+| Field | English (UK) | English (US) | Spanish (Mexico) — US extra keywords |
+|---|---|---|---|
+| App Name (30) | `Receipt Vault: Receipt Scanner` | same | same |
+| Subtitle (30) | `Expense Tracker for Tax & VAT` | `Expense Tracker & Organizer` | `Paperless Expense Reports` |
+
+Keywords (100, comma-separated, no spaces):
+
+English (UK) (99):
 ```
-Receipt Vault
+organiser,keeper,ocr,itemised,hmrc,self,assessment,bookkeeping,warranty,sole,trader,spending,budget
 ```
-ASO alternative (28):
+English (US) (97):
 ```
-Receipt Vault: Scan & Export
+organizer,keeper,ocr,itemized,taxes,write,off,bookkeeping,warranty,freelancer,spending,budget,irs
+```
+Spanish (Mexico) (97):
+```
+small,business,expenses,reimbursement,claim,accountant,cpa,deduction,1099,shoebox,digital,storage
 ```
 
-## Subtitle (30)
-```
-Snap, sort & export receipts
-```
+<details><summary>v1.0 (superseded)</summary>
+
+- Name: `Receipt Vault: Scan & Export` · Subtitle: `Snap, sort & export receipts`
+- Keywords: `expense,tax,VAT,spending,budget,scanner,tracker,business,invoice,itemised,itemized,export,finance`
+- Problem: ranked outside the top ~180 on every generic term (receipt scanner/tracker/organizer,
+  expense tracker, scan receipts, vat receipts) in both UK and US; ~19 other apps share the
+  "Receipt Vault" name so the brand term alone is worth little.
+</details>
 
 ## Promotional Text (170) — editable anytime without review
 ```
@@ -65,9 +86,9 @@ including future additions.
 Receipt Vault is not accounting or tax advice — always check the scanned details.
 ```
 
-## What's New (version 1.0)
+## What's New (version 1.0.1)
 ```
-Welcome to Receipt Vault 1.0 — scan receipts, capture every line item on your device, and export them your way. Thank you for trying it!
+Small improvements and fixes. Enjoying Receipt Vault? A quick rating really helps an independent app get found — thank you!
 ```
 
 ---
@@ -100,6 +121,9 @@ Unlock automatic item scanning, colour-formatted spreadsheet & PDF export, and t
 ---
 
 ## Screenshot headlines (for reference — baked into the framed images)
+**Upload order matters:** only the first 3 show in search results. Upload `framed/01-title.png`
+first, then 02 → 07 in filename order. (v1.0 went live in the wrong order: 04, 03, 02, 07, 06, 01, 05.)
+
 1. **Title/hero:** Receipt Vault · "Scan · Organise · Export" · "Never lose a receipt again"
 2. **Dashboard:** Never lose / a receipt
 3. **Items:** Every item, / captured

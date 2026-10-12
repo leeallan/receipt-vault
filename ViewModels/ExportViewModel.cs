@@ -10,7 +10,8 @@ public partial class ExportViewModel(
     IExportService exportService,
     IReportService reportService,
     ISubscriptionService subscriptionService,
-    IBillingService billingService) : BaseViewModel
+    IBillingService billingService,
+    IReviewPromptService reviewPromptService) : BaseViewModel
 {
     [ObservableProperty] private DateTime fromDate = DateTime.Today.AddMonths(-1);
     [ObservableProperty] private DateTime toDate = DateTime.Today;
@@ -162,6 +163,7 @@ public partial class ExportViewModel(
             }
 
             await exportService.ShareFileAsync(path);
+            _ = reviewPromptService.OnExportCompletedAsync();
         });
     }
 
