@@ -50,8 +50,8 @@ public class ReceiptService(DatabaseService db) : IReceiptService
 
     public async Task DeleteAsync(Receipt receipt)
     {
-        if (!string.IsNullOrEmpty(receipt.ImagePath) && File.Exists(receipt.ImagePath))
-            File.Delete(receipt.ImagePath);
+        if (receipt.ImageFullPath is { } imagePath && File.Exists(imagePath))
+            File.Delete(imagePath);
 
         await db.ExecuteAsync("DELETE FROM LineItems WHERE ReceiptId = ?", receipt.Id);
         await db.DeleteAsync(receipt);

@@ -34,18 +34,30 @@ public class OcrService : IOcrService
             if (error is not null || textRequest.Results is null)
                 return new OcrResult { Validation = new ReceiptValidation { IsLikelyReceipt = false } };
 
-            var observations = textRequest.Results
+            var recognised = textRequest.Results
                 .OfType<VNRecognizedTextObservation>()
-                .Select(obs => (
-                    Text: obs.TopCandidates(1).FirstOrDefault()?.String ?? "",
-                    Box: obs.BoundingBox))
+                .Select(obs => (Obs: obs, Text: obs.TopCandidates(1).FirstOrDefault()?.String ?? ""))
                 .Where(o => !string.IsNullOrWhiteSpace(o.Text))
                 .ToList();
+            var observations = recognised.Select(o => (o.Text, Box: o.Obs.BoundingBox)).ToList();
+
+            // A hand-held photo is rarely square-on. Measure the tilt from each text run's
+            // baseline (in pixels, since the normalised axes have different scales) and take
+            // the median of the longer runs, which give the steadiest reading.
+            double pxWidth = image.CGImage.Width, pxHeight = image.CGImage.Height;
+            var angles = recognised
+                .Where(o => o.Text.Length >= 4)
+                .Select(o => Math.Atan2(
+                    (o.Obs.TopRight.Y - o.Obs.TopLeft.Y) * pxHeight,
+                    (o.Obs.TopRight.X - o.Obs.TopLeft.X) * pxWidth))
+                .OrderBy(a => a)
+                .ToList();
+            var skew = angles.Count > 0 ? angles[angles.Count / 2] : 0;
 
             // Vision returns one observation per text run, so a multi-column receipt
             // (description on the left, price on the right) arrives as separate runs.
             // Regroup them into visual rows by vertical position before parsing.
-            var lines = GroupIntoRows(observations);
+            var lines = GroupIntoRows(observations, skew, pxWidth, pxHeight);
 
             var result = ParseReceipt(lines);
 
@@ -100,33 +112,59 @@ public class OcrService : IOcrService
 
     // Stitches text runs that share a horizontal band back into single logical rows,
     // ordered left-to-right, so column-split receipts read like "DESCRIPTION ... PRICE".
-    private static List<string> GroupIntoRows(List<(string Text, CGRect Box)> observations)
+    // Positions are first rotated by -skew so a tilted receipt's rows run level again;
+    // otherwise a price on the right drifts into the neighbouring row (e.g. a "SAVING 90p"
+    // line merging with the next item, turning that item's price into a saving).
+    private static List<string> GroupIntoRows(
+        List<(string Text, CGRect Box)> observations, double skew, double pxWidth, double pxHeight)
     {
         if (observations.Count == 0) return [];
 
         // BoundingBox is normalised (0–1) with the origin at the bottom-left, so a
         // larger Y is nearer the top of the receipt.
-        static double MidY((string Text, CGRect Box) o) => o.Box.Y + o.Box.Height / 2.0;
+        var cos = Math.Cos(skew);
+        var sin = Math.Sin(skew);
+        var tokens = observations.Select(o =>
+        {
+            var cx = (double)(o.Box.X + o.Box.Width / 2) * pxWidth;
+            var cy = (double)(o.Box.Y + o.Box.Height / 2) * pxHeight;
+            return (o.Text,
+                X: (cx * cos + cy * sin) / pxWidth,
+                Y: (-cx * sin + cy * cos) / pxHeight);
+        }).ToList();
 
         var avgHeight = observations.Average(o => (double)o.Box.Height);
-        var threshold = Math.Max(avgHeight * 0.6, 0.004);
+        var threshold = Math.Max(avgHeight * 0.5, 0.004);
 
-        var rows = new List<List<(string Text, CGRect Box)>>();
-        foreach (var token in observations.OrderByDescending(MidY))
+        // Each token joins the row whose horizontally-nearest token is closest in height,
+        // so any tilt left over after levelling only has to be bridged between neighbours.
+        var rows = new List<List<(string Text, double X, double Y)>>();
+        foreach (var token in tokens.OrderByDescending(t => t.Y))
         {
-            var y = MidY(token);
-            var row = rows.FirstOrDefault(r => Math.Abs(r.Average(MidY) - y) < threshold);
-            if (row is null)
+            List<(string Text, double X, double Y)>? best = null;
+            var bestDistance = threshold;
+            foreach (var row in rows)
             {
-                row = [];
-                rows.Add(row);
+                var nearest = row.MinBy(t => Math.Abs(t.X - token.X));
+                var distance = Math.Abs(nearest.Y - token.Y);
+                if (distance < bestDistance)
+                {
+                    best = row;
+                    bestDistance = distance;
+                }
             }
-            row.Add(token);
+
+            if (best is null)
+            {
+                best = [];
+                rows.Add(best);
+            }
+            best.Add(token);
         }
 
         return rows
             .Select(r => string.Join(" ", r
-                .OrderBy(t => (double)t.Box.X)
+                .OrderBy(t => t.X)
                 .Select(t => t.Text.Trim())))
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .ToList();
@@ -141,22 +179,7 @@ public class OcrService : IOcrService
             .FirstOrDefault(l => l.Length > 2 && !Regex.IsMatch(l, @"^\d") && !l.Contains("receipt", StringComparison.OrdinalIgnoreCase))
             ?? string.Empty;
 
-        // Total: last/largest currency amount near "total" keyword
-        for (int i = lines.Count - 1; i >= 0; i--)
-        {
-            var line = lines[i];
-            if (Regex.IsMatch(line, @"\b(total|amount due|balance|sum|to pay)\b", RegexOptions.IgnoreCase))
-            {
-                var m = Regex.Match(line, @"[£$€]?\s*(\d{1,6}[.,]\d{2})");
-                if (m.Success && decimal.TryParse(m.Groups[1].Value.Replace(",", "."),
-                    System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var total))
-                {
-                    result.Total = total;
-                    break;
-                }
-            }
-        }
+        result.Total = FindTotal(lines);
 
         // Fallback: find the largest currency amount if no "total" line found
         if (result.Total is null)
@@ -207,13 +230,51 @@ public class OcrService : IOcrService
         return result;
     }
 
+    // Phrases that unambiguously mark the amount paid, preferred over a bare "total".
+    private const string StrongTotalKeywords =
+        @"\b(to pay|amount due|balance due|total due|grand total|amount payable)\b";
+
+    // "Total"-bearing lines that are NOT the amount paid, e.g. Boots' "Total Saving Today £2.08"
+    // printed below "TOTAL TO PAY 18.58", or "Total VAT", "Sub Total", "Total Points".
+    private const string NotTotalKeywords =
+        @"\b(sub[\s\-]?total|saving|savings|saved|discount|points|vat|tax|gst)\b";
+
+    private static decimal? FindTotal(List<string> lines)
+    {
+        decimal? strong = null, plain = null;
+
+        // Bottom-up, so the last matching line on the receipt wins within each tier.
+        for (int i = lines.Count - 1; i >= 0; i--)
+        {
+            var line = lines[i];
+            if (!Regex.IsMatch(line, @"\b(total|amount due|balance|sum|to pay)\b", RegexOptions.IgnoreCase)
+                || Regex.IsMatch(line, NotTotalKeywords, RegexOptions.IgnoreCase))
+                continue;
+
+            var m = Regex.Match(line, @"[£$€]?\s*(\d{1,6}[.,]\d{2})");
+            if (!m.Success || !decimal.TryParse(m.Groups[1].Value.Replace(",", "."),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var amount))
+                continue;
+
+            if (Regex.IsMatch(line, StrongTotalKeywords, RegexOptions.IgnoreCase))
+                strong ??= amount;
+            else
+                plain ??= amount;
+
+            if (strong is not null) break;
+        }
+
+        return strong ?? plain;
+    }
+
     // Lines that describe totals, payment or store metadata rather than a purchased item.
     private const string MetaKeywords =
         @"\b(sub[\s\-]?total|total|amount|balance|to pay|change|cash|card|tender|visa|mastercard|" +
         @"contactless|debit|credit|vat|tax|gst|receipt|thank|www|http|tel|phone|till|cashier|" +
         @"store|points|nectar points|aid|auth|approved|reference|invoice|order|table|server|" +
         @"items|net|goods|source|sale|verification|authorisation|authorization|eft|terminal|" +
-        @"merchant|gbp|usd|eur|change due)\b";
+        @"merchant|gbp|usd|eur|change due|debited|cardholder|retain)\b";
 
     // Lines that describe a discount / saving applied to the previous item or the basket.
     private const string SavingsKeywords =
@@ -271,8 +332,18 @@ public class OcrService : IOcrService
                 isNegative = m.Groups["neg"].Success || m.Groups["neg2"].Success;
             }
 
+            // Drop a "was" price printed before the charged price, e.g. Boots' "Ug Gl Sham 250 8.95 NOW 8.05".
+            desc = Regex.Replace(desc, @"\s+[£$€]?[\d.,]+\s*NOW$", "", RegexOptions.IgnoreCase);
             desc = desc.Trim(' ', '-', '.', '·', '*', ':');
             if (!Regex.IsMatch(desc, "[A-Za-z]{2,}")) continue; // need a real description
+
+            // Savings are often printed in pence ("SAVING 90p"); only read pence on saving rows.
+            if (amount is null && Regex.IsMatch(line, SavingsKeywords, RegexOptions.IgnoreCase))
+            {
+                var pm = Regex.Match(line, @"\b(?<p>\d{1,3})\s?p$", RegexOptions.IgnoreCase);
+                if (pm.Success)
+                    amount = int.Parse(pm.Groups["p"].Value) / 100m;
+            }
 
             var isSaving = amount is not null &&
                 (isNegative || Regex.IsMatch(line, SavingsKeywords, RegexOptions.IgnoreCase));

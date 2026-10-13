@@ -49,12 +49,12 @@
             <VerticalStackLayout Padding="24,0,24,24" Spacing="16">
 
                 <!-- Receipt image -->
-                <Border IsVisible="{Binding Receipt.ImagePath, Converter={StaticResource StringNotNullConverter}}"
+                <Border IsVisible="{Binding Receipt.ImageFullPath, Converter={StaticResource StringNotNullConverter}}"
                         HeightRequest="200"
                         BackgroundColor="{StaticResource AppSurface}"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 16">
-                    <Image Source="{Binding Receipt.ImagePath}" Aspect="AspectFill"/>
+                    <Image Source="{Binding Receipt.ImageFullPath}" Aspect="AspectFill"/>
                 </Border>
 
                 <!-- Summary card -->

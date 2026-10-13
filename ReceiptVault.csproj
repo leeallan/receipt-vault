@@ -15,7 +15,7 @@
 		<ApplicationTitle>Receipt Vault</ApplicationTitle>
 		<ApplicationId>com.farabove.receiptvault</ApplicationId>
 		<ApplicationDisplayVersion>1.0.1</ApplicationDisplayVersion>
-		<ApplicationVersion>3</ApplicationVersion>
+		<ApplicationVersion>4</ApplicationVersion>
 		<WindowsPackageType>None</WindowsPackageType>
 		<NoWarn>$(NoWarn);NU1608</NoWarn>
 

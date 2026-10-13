@@ -23,6 +23,17 @@ public partial class CaptureViewModel(
     [ObservableProperty] private bool isProcessingOcr;
     [ObservableProperty] private bool hasImage;
 
+    // Full-resolution camera images were ~24 MB each. 2560px on the long edge keeps receipt
+    // text sharp for OCR at a fraction of the size. RotateImage bakes the EXIF orientation
+    // into the pixels, since the OCR reads raw pixels and ignores the orientation flag.
+    private static MediaPickerOptions PhotoOptions => new()
+    {
+        MaximumWidth = 2560,
+        MaximumHeight = 2560,
+        CompressionQuality = 80,
+        RotateImage = true,
+    };
+
     public ObservableCollection<LineItem> LineItems { get; } = [];
 
     public bool HasLineItems => LineItems.Count > 0;
@@ -69,14 +80,14 @@ public partial class CaptureViewModel(
             return;
         }
 
-        var photo = await MediaPicker.Default.CapturePhotoAsync();
+        var photo = await MediaPicker.Default.CapturePhotoAsync(PhotoOptions);
         await ProcessPhotoAsync(photo);
     }
 
     [RelayCommand]
     private async Task PickPhotoAsync()
     {
-        var photos = await MediaPicker.Default.PickPhotosAsync();
+        var photos = await MediaPicker.Default.PickPhotosAsync(PhotoOptions);
         var photo = photos?.FirstOrDefault();
         await ProcessPhotoAsync(photo);
     }
@@ -86,7 +97,7 @@ public partial class CaptureViewModel(
         if (photo is null) return;
 
         // Write to a temporary file first — we only keep it if it validates as a receipt.
-        var imagesDir = Path.Combine(FileSystem.AppDataDirectory, "receipt_images");
+        var imagesDir = Receipt.ImagesDirectory;
         Directory.CreateDirectory(imagesDir);
         var localPath = Path.Combine(imagesDir, $"{Guid.NewGuid()}.jpg");
 
@@ -180,7 +191,7 @@ public partial class CaptureViewModel(
             Date = Date,
             Category = SelectedCategory,
             IsBusinessExpense = IsBusinessExpense,
-            ImagePath = CapturedImagePath,
+            ImagePath = CapturedImagePath is null ? null : Path.GetFileName(CapturedImagePath),
             Notes = Notes,
         };
 
