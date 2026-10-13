@@ -88,7 +88,13 @@ Receipt Vault is not accounting or tax advice — always check the scanned detai
 
 ## What's New (version 1.0.1)
 ```
-Small improvements and fixes. Enjoying Receipt Vault? A quick rating really helps an independent app get found — thank you!
+Smarter receipt scanning:
+• Picks up more line items correctly — including crumpled or curled receipts, and items printed over two lines
+• Better at finding the store name and the amount you actually paid, with multibuy savings taken off
+• Receipt photos now take up far less space on your iPhone
+• Receipt photos display correctly after restoring to a new iPhone
+
+Plus stability improvements. Enjoying Receipt Vault? A quick rating really helps an independent app get found — thank you!
 ```
 
 ---
