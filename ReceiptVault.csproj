@@ -60,8 +60,10 @@
 	<ItemGroup>
 		<Compile Remove="Shared\**" />
 		<Compile Remove="ReceiptVault.Web\**" />
+		<Compile Remove="tests\**" />
 		<None Remove="Shared\**" />
 		<None Remove="ReceiptVault.Web\**" />
+		<None Remove="tests\**" />
 		<MauiXaml Remove="Shared\**" />
 		<MauiXaml Remove="ReceiptVault.Web\**" />
 	</ItemGroup>

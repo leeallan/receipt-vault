@@ -23,16 +23,11 @@ public partial class CaptureViewModel(
     [ObservableProperty] private bool isProcessingOcr;
     [ObservableProperty] private bool hasImage;
 
-    // Full-resolution camera images were ~24 MB each. 2560px on the long edge keeps receipt
-    // text sharp for OCR at a fraction of the size. RotateImage bakes the EXIF orientation
-    // into the pixels, since the OCR reads raw pixels and ignores the orientation flag.
-    private static MediaPickerOptions PhotoOptions => new()
-    {
-        MaximumWidth = 2560,
-        MaximumHeight = 2560,
-        CompressionQuality = 80,
-        RotateImage = true,
-    };
+    // Kept with the saved receipt so mis-reads can be diagnosed later.
+    private string? rawOcrText;
+
+    // Stored receipt photos are capped at this long edge (full-res camera images were ~24 MB).
+    private const int MaxStoredImageEdge = 2560;
 
     public ObservableCollection<LineItem> LineItems { get; } = [];
 
@@ -80,14 +75,14 @@ public partial class CaptureViewModel(
             return;
         }
 
-        var photo = await MediaPicker.Default.CapturePhotoAsync(PhotoOptions);
+        var photo = await MediaPicker.Default.CapturePhotoAsync();
         await ProcessPhotoAsync(photo);
     }
 
     [RelayCommand]
     private async Task PickPhotoAsync()
     {
-        var photos = await MediaPicker.Default.PickPhotosAsync(PhotoOptions);
+        var photos = await MediaPicker.Default.PickPhotosAsync();
         var photo = photos?.FirstOrDefault();
         await ProcessPhotoAsync(photo);
     }
@@ -129,12 +124,16 @@ public partial class CaptureViewModel(
             return;
         }
 
+        // OCR has already read the full-resolution photo; only now shrink it for storage.
+        await ShrinkForStorageAsync(localPath);
+
         CapturedImagePath = localPath;
         HasImage = true;
 
         if (result.Success)
         {
             Merchant = result.Merchant;
+            rawOcrText = result.RawText;
             TotalText = result.Total?.ToString("F2") ?? string.Empty;
             Date = result.Date ?? DateTime.Today;
 
@@ -143,6 +142,41 @@ public partial class CaptureViewModel(
                 LineItems.Add(item);
             NotifyItemsChanged();
         }
+    }
+
+    // Downsizes and re-encodes the photo in place. Best effort: on any failure the
+    // full-size original is kept. iOS only for now — Android's PlatformImage ignores the
+    // EXIF orientation flag, so a re-encoded camera photo could come out sideways.
+    private static async Task ShrinkForStorageAsync(string path)
+    {
+#if IOS
+        var tempPath = path + ".tmp";
+        try
+        {
+            using (var source = File.OpenRead(path))
+            {
+                using var image = Microsoft.Maui.Graphics.Platform.PlatformImage.FromStream(source);
+                if (Math.Max(image.Width, image.Height) > MaxStoredImageEdge)
+                {
+                    using var shrunk = image.Downsize(MaxStoredImageEdge, disposeOriginal: false);
+                    using var dest = File.Create(tempPath);
+                    await shrunk.SaveAsync(dest, ImageFormat.Jpeg, quality: 0.8f);
+                }
+                else
+                {
+                    using var dest = File.Create(tempPath);
+                    await image.SaveAsync(dest, ImageFormat.Jpeg, quality: 0.8f);
+                }
+            }
+            File.Move(tempPath, path, overwrite: true);
+        }
+        catch
+        {
+            TryDelete(tempPath);
+        }
+#else
+        await Task.CompletedTask;
+#endif
     }
 
     private static void TryDelete(string path)
@@ -193,6 +227,7 @@ public partial class CaptureViewModel(
             IsBusinessExpense = IsBusinessExpense,
             ImagePath = CapturedImagePath is null ? null : Path.GetFileName(CapturedImagePath),
             Notes = Notes,
+            RawOcrText = rawOcrText,
         };
 
         await receiptService.SaveAsync(receipt);
@@ -218,6 +253,7 @@ public partial class CaptureViewModel(
     {
         CapturedImagePath = null;
         HasImage = false;
+        rawOcrText = null;
         Merchant = string.Empty;
         TotalText = string.Empty;
         Date = DateTime.Today;
