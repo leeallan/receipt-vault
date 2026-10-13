@@ -75,6 +75,17 @@ public class ReceiptTextParserTests
         Assert.Equal(30.55m, result.Total);
     }
 
+    // Document-scanner capture that includes the payment section: "SALE Total 30.55" read
+    // as "›ALE 30.55", and the card auth time below the payment line read as "ch 09.50".
+    [Fact]
+    public void Wickes_IgnoresMisreadTotalAndPaymentDetails()
+    {
+        var result = Parse("wickes-scanned.json");
+
+        Assert.Equal([15.00m, 4.05m, 5.50m, 6.00m], result.Items.Select(i => i.Price));
+        Assert.Equal(30.55m, result.Total);
+    }
+
     // A faint "£" read as "6": "TOTAL: £33.32" came out as "TOTAL: 633.32" on the phone.
     // The items still add up to £33.32, which identifies the stray leading digit.
     [Fact]

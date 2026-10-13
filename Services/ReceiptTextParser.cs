@@ -271,12 +271,25 @@ public static class ReceiptTextParser
         }
 
         (result.Items, var deductions) = ParseLineItems(lines);
+        DropTotalReadAsItem(result.Items, result.Total);
         result.Total = ReconcileTotal(result.Total, result.Items, deductions);
 
         return result;
     }
 
     // Cross-checks the total against the items, which are read independently:
+    // A total line whose keyword was misread ("SALE Total 30.55" as "›ALE 30.55") looks
+    // like an item. If an item costs exactly the total and the other items already add up
+    // to it, it's the total.
+    private static void DropTotalReadAsItem(List<LineItem> items, decimal? total)
+    {
+        if (total is not { } t || items.Count < 2) return;
+
+        var echo = items.FindLastIndex(i => i.Price == t && i.Savings == 0);
+        if (echo >= 0 && items.Where((_, index) => index != echo).Sum(i => i.Price - i.Savings) == t)
+            items.RemoveAt(echo);
+    }
+
     // deductions are the minus lines ("COOKEDM - 2For£3 -£1.48") taken off the item prices;
     // savings that are only informational (Boots' "SAVING 90p" under a price already
     // reduced) don't count.
@@ -356,6 +369,11 @@ public static class ReceiptTextParser
         @"items|net|goods|source|sale|verification|authorisation|authorization|eft|terminal|" +
         @"merchant|gbp|usd|eur|change due|debited|cardholder|retain)\b";
 
+    // A line that starts with the payment method. Anchored to the start so items such as
+    // "BIRTHDAY CARD 2.50" don't match.
+    private const string PaymentLine =
+        @"^(mastercard|visa|amex|american express|maestro|card|cash|contactless|debit card|credit card)\b";
+
     // Lines that describe a discount / saving applied to the previous item or the basket.
     private const string SavingsKeywords =
         @"\b(saving|savings|discount|reduced|multibuy|multi[\s\-]?buy|meal deal|offer|promo|" +
@@ -376,6 +394,11 @@ public static class ReceiptTextParser
             var previousDescription = pendingDescription;
             pendingDescription = null;
             if (line.Length < 3) continue;
+
+            // The payment line ("Mastercard 30.55-", "CARD £33.32") ends the item list;
+            // anything below is card / VAT / auth details that can misread as items.
+            if (items.Count > 0 && Regex.IsMatch(line, PaymentLine, RegexOptions.IgnoreCase))
+                break;
 
             // Skip obvious totals / payment / metadata rows.
             if (Regex.IsMatch(line, MetaKeywords, RegexOptions.IgnoreCase))
@@ -466,10 +489,12 @@ public static class ReceiptTextParser
             if (isSaving)
             {
                 // Attach the saving to the most recent item; otherwise skip a basket-level saving
-                // that has no item to hang it on.
-                if (items.Count > 0)
+                // that has no item to hang it on. A saving can't exceed the item's price — one
+                // that does is something else with a minus sign, e.g. a misread payment line
+                // "Mastercara 30.55-".
+                if (items.Count > 0 && Math.Abs(amount!.Value) <= items[^1].Price)
                 {
-                    items[^1].Savings += Math.Abs(amount!.Value);
+                    items[^1].Savings += Math.Abs(amount.Value);
                     if (isNegative)
                         deductions += Math.Abs(amount.Value);
                 }
