@@ -1,0 +1,13 @@
+# Renders and screen recordings — regenerate with studio/render.sh and capture/record.sh
+out/
+capture/raw/
+studio/public/footage/
+
+# Scratch Maestro flows used while mapping screens
+capture/flows/_*.yaml
+
+# Remotion scaffold boilerplate (project docs live in ../README.md)
+studio/README.md
+
+# Generated receipt photos — regenerate with capture/receipts/make_receipts.py
+capture/receipts/*.jpg

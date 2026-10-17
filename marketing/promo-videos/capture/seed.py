@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+"""Seed the Receipt Vault simulator database with fictional demo data for promo recordings.
+
+Usage: seed.py <app-data-container> <mode>
+  mode "light" - a handful of receipts this month; one is scanned on camera (Store 1).
+  mode "full"  - a year of personal and business receipts, a few itemised, with budgets.
+
+The app must have been launched once (so the tables exist) and then terminated.
+Every shop, amount and item is made up.
+"""
+import os
+import random
+import shutil
+import sqlite3
+import sys
+from datetime import date, datetime, timedelta
+
+EPOCH = datetime(1, 1, 1)
+TODAY = date.today()
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def ticks(d):
+    if isinstance(d, date) and not isinstance(d, datetime):
+        d = datetime(d.year, d.month, d.day)
+    return int((d - EPOCH).total_seconds()) * 10_000_000
+
+
+# merchant, category, business, typical spend (low, high), visits per month
+REGULARS = [
+    ("Freshway", "Groceries", False, (18, 74), 5),
+    ("Bean & Barrel", "Dining", False, (3.2, 9.8), 4),
+    ("Riverside Fuel", "Transport", False, (38, 66), 2),
+    ("Cornerstone Pharmacy", "Health", False, (4, 22), 0.6),
+    ("Lumen Energy", "Utilities", False, (82, 118), 1),
+    ("Harbour & Co", "Shopping", False, (15, 90), 0.8),
+    ("Riverside Cinema", "Entertainment", False, (11, 32), 0.6),
+    ("Brickwell", "Office", True, (12, 85), 1.2),
+    ("Northline Rail", "Travel", True, (24, 96), 1.5),
+    ("The Copper Kettle", "Meals & Ents", True, (16, 64), 1.2),
+    ("PixelCloud", "Software", True, (12, 12), 1),
+    ("Inkwell Print", "Marketing", True, (28, 140), 0.4),
+    ("Hartley & Moss", "Professional", True, (180, 180), 0.25),
+]
+
+# Recent receipts shown on the dashboard in both modes (days ago, merchant, total, category, business)
+RECENT = [
+    (0, "Bean & Barrel", 4.60, "Dining", False),
+    (1, "Northline Rail", 38.40, "Travel", True),
+    (2, "Freshway", 46.12, "Groceries", False),
+    (4, "PixelCloud", 12.00, "Software", True),
+    (6, "Riverside Fuel", 58.30, "Transport", False),
+]
+
+FRESHWAY_ITEMS = [
+    ("SOURDOUGH LOAF", 2.10, 0), ("FREE RANGE EGGS 12", 3.45, 0), ("SEMI SKIMMED MILK 4PT", 1.65, 0),
+    ("MATURE CHEDDAR 400G", 3.75, 0.75), ("BANANAS LOOSE", 0.98, 0), ("OLIVE OIL 500ML", 5.20, 0),
+    ("GREEK YOGURT 500G", 2.40, 0), ("COFFEE BEANS 1KG", 11.50, 1.50), ("CHERRY TOMATOES", 1.85, 0),
+    ("PASTA FUSILLI 1KG", 1.60, 0), ("AVOCADOS 2PK", 2.20, 0), ("ORANGE JUICE 1L", 1.95, 0),
+]
+
+BRICKWELL_ITEMS = [
+    ("TIMBER 47X100 2.4M", 14.40, 0), ("SCREWS 5X60 BOX 200", 8.95, 0), ("WOOD GLUE 1L", 6.49, 0),
+    ("MASKING TAPE 3PK", 5.25, 0), ("DUST SHEET 12X9", 7.99, 0), ("SANDPAPER ASSORTED", 4.60, 0),
+]
+
+
+def main(container, mode):
+    db = sqlite3.connect(os.path.join(container, "Library", "receiptvault.db3"))
+    for t in ("Receipts", "LineItems", "BudgetItems"):
+        db.execute(f"DELETE FROM {t}")
+    db.execute("DELETE FROM sqlite_sequence")
+
+    images = os.path.join(container, "Library", "receipt_images")
+    shutil.rmtree(images, ignore_errors=True)
+    os.makedirs(images)
+
+    rng = random.Random(7)
+    rows = []  # (date, merchant, total, category, business, image, items)
+
+    for days, merchant, total, cat, biz in RECENT:
+        rows.append((TODAY - timedelta(days=days), merchant, total, cat, biz, None, None))
+
+    if mode == "full":
+        start = TODAY - timedelta(days=365)
+        for merchant, cat, biz, (lo, hi), per_month in REGULARS:
+            d = start
+            while d < TODAY - timedelta(days=10):
+                d += timedelta(days=max(1, int(rng.expovariate(per_month / 30.0))))
+                if d >= TODAY - timedelta(days=10):
+                    break
+                total = round(rng.uniform(lo, hi), 2)
+                rows.append((d, merchant, total, cat, biz, None, None))
+
+        # Itemised receipts: a Freshway shop and a Brickwell trade run, both with photos.
+        fw = rng.sample(FRESHWAY_ITEMS, 10)
+        rows.append((TODAY - timedelta(days=9), "Freshway", round(sum(p - s for _, p, s in fw), 2),
+                     "Groceries", False, "freshway.jpg", fw))
+        rows.append((TODAY - timedelta(days=8), "Brickwell", round(sum(p for _, p, _ in BRICKWELL_ITEMS), 2),
+                     "Office", True, "brickwell.jpg", BRICKWELL_ITEMS))
+
+        for cat, limit, biz in [("Groceries", 320, False), ("Dining", 60, False), ("Transport", 150, False),
+                                ("Travel", 200, True), ("Software", 40, True)]:
+            db.execute("INSERT INTO BudgetItems (Category, MonthlyLimit, IsBusinessBudget) VALUES (?,?,?)",
+                       (cat, limit, int(biz)))
+
+    rows.sort(key=lambda r: r[0])
+    for d, merchant, total, cat, biz, image, items in rows:
+        stamp = datetime(d.year, d.month, d.day, rng.randint(8, 19), rng.randint(0, 59))
+        if image:
+            shutil.copy(os.path.join(HERE, "receipts", image), os.path.join(images, image))
+        # Business receipts carry 20% VAT (included in the total), as UK trade receipts do.
+        tax = round(total / 6, 2) if biz else None
+        cur = db.execute(
+            "INSERT INTO Receipts (Merchant, Total, Tax, Currency, Date, Category, IsBusinessExpense, ImagePath,"
+            " CreatedAt, UpdatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (merchant, total, tax, "GBP", ticks(d), cat, int(biz), image, ticks(stamp), ticks(stamp)))
+        for desc, price, saving in items or []:
+            db.execute("INSERT INTO LineItems (ReceiptId, Description, Quantity, Price, Savings, Currency)"
+                       " VALUES (?,?,?,?,?,?)", (cur.lastrowid, desc, 1, price, saving, "GBP"))
+
+    db.commit()
+    print(f"seeded {len(rows)} receipts ({mode})")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1], sys.argv[2])

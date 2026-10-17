@@ -1,0 +1,46 @@
+appId: com.farabove.receiptvault
+---
+# Store 1 — scan a receipt from the photo library, file it as a business expense, save.
+# State: reset.sh light. Brickwell is the 2nd photo in the library (capture/receipts).
+- waitForAnimationToEnd
+- tapOn: ".*Scan Receipt"
+- waitForAnimationToEnd
+- tapOn: ".*Gallery"
+- extendedWaitUntil:
+    visible: "Collections"
+    timeout: 10000
+- runFlow:
+    when:
+      visible: "Private Access to Photos"
+    commands:
+      - tapOn: {point: "91%,18%"}
+      - waitForAnimationToEnd
+- tapOn: {point: "50%,25%"}            # Brickwell receipt
+- extendedWaitUntil:
+    visible: "BRICKWELL"
+    timeout: 15000
+- waitForAnimationToEnd
+- takeScreenshot: s1_scanned
+- swipe: {start: "50%,75%", end: "50%,45%", duration: 1200}
+- waitForAnimationToEnd
+- takeScreenshot: s1_scrolled
+- tapOn: "Other"
+- waitForAnimationToEnd
+- tapOn: {point: "220,789"}            # wheel: Marketing
+- waitForAnimationToEnd
+- tapOn: {point: "220,789"}            # wheel: Office
+- waitForAnimationToEnd
+- tapOn: {point: "91%,73%"}            # ✓
+- waitForAnimationToEnd
+- takeScreenshot: s1_category
+- tapOn: {point: "83%,75%"}            # Business expense switch
+- waitForAnimationToEnd
+- takeScreenshot: s1_business
+- swipe: {start: "50%,70%", end: "50%,45%", duration: 900}
+- waitForAnimationToEnd
+- tapOn: "Save Receipt"
+- waitForAnimationToEnd
+- takeScreenshot: s1_saved
+- swipe: {start: "50%,40%", end: "50%,75%", duration: 900}
+- waitForAnimationToEnd
+- takeScreenshot: s1_saved_top

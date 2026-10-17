@@ -1,0 +1,43 @@
+appId: com.farabove.receiptvault
+---
+# Store 2 — a year of receipts: month history, budgets, the full list, business filter,
+# search and a receipt photo. State: reset.sh full
+- waitForAnimationToEnd
+- tapOn: {point: "10%,20%"}            # previous month ×3
+- waitForAnimationToEnd
+- tapOn: {point: "10%,20%"}
+- waitForAnimationToEnd
+- tapOn: {point: "10%,20%"}
+- waitForAnimationToEnd
+- takeScreenshot: s2_month
+- tapOn: {point: "63%,94%"}            # Budget
+- waitForAnimationToEnd
+- takeScreenshot: s2_budget
+- tapOn: {point: "37%,94%"}            # Receipts
+- waitForAnimationToEnd
+- swipe: {start: "50%,85%", end: "50%,30%", duration: 250}
+- swipe: {start: "50%,85%", end: "50%,30%", duration: 250}
+- waitForAnimationToEnd
+- takeScreenshot: s2_scrolled
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- swipe: {start: "50%,30%", end: "50%,90%", duration: 200}
+- waitForAnimationToEnd
+- tapOn: "Business"
+- waitForAnimationToEnd
+- takeScreenshot: s2_business
+- tapOn: "All"
+- waitForAnimationToEnd
+- tapOn: "Search receipts…"
+- inputText: "Brickwell"
+- pressKey: Enter
+- waitForAnimationToEnd
+- takeScreenshot: s2_search
+- tapOn: {point: "50%,36%"}            # first result (has a photo)
+- waitForAnimationToEnd
+- takeScreenshot: s2_detail
+- swipe: {start: "50%,70%", end: "50%,45%", duration: 900}
+- waitForAnimationToEnd

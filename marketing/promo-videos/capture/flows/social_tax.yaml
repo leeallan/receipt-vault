@@ -1,0 +1,25 @@
+appId: com.farabove.receiptvault
+---
+# Social — the tax & expense report opened in Preview.
+# State: reset.sh full premium
+- waitForAnimationToEnd
+- tapOn: {point: "37%,94%"}            # Receipts
+- waitForAnimationToEnd
+- tapOn: {point: "72%,14%"}            # ↥ Export
+- waitForAnimationToEnd
+- tapOn: "This year"
+- waitForAnimationToEnd
+- tapOn: "Tax & expense report \\(PDF\\)"
+- extendedWaitUntil:
+    visible: "Preview"
+    timeout: 15000
+- waitForAnimationToEnd
+- tapOn: {point: "15%,72%"}            # Preview (share sheet; tapping the label misses)
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: st_pdf
+- swipe: {start: "50%,75%", end: "50%,35%", duration: 2500}
+- waitForAnimationToEnd
+- takeScreenshot: st_pdf2
+- swipe: {start: "50%,75%", end: "50%,35%", duration: 2500}
+- waitForAnimationToEnd
