@@ -36,6 +36,9 @@ public class Receipt
         : Path.Combine(ImagesDirectory, Path.GetFileName(ImagePath));
 
     [Ignore]
+    public string CategoryIcon => Models.Category.Find(Category)?.Icon ?? "🏷️";
+
+    [Ignore]
     public string FormattedTotal => $"{CurrencySymbol}{Total:F2}";
 
     [Ignore]

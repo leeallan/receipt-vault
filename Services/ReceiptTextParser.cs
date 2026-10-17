@@ -50,11 +50,13 @@ public static class ReceiptTextParser
 
     // A hand-held photo is rarely square-on. Measure the tilt from each text run's
     // baseline (in pixels, since the normalised axes have different scales) and take
-    // the median of the longer runs, which give the steadiest reading.
+    // the median of the longer runs, which give the steadiest reading. Vision reports
+    // short runs such as a "2.10" price as level boxes whatever the tilt, so on a receipt
+    // with many items they would outvote the descriptions.
     private static double MeasureSkew(IReadOnlyList<OcrToken> tokens, double pxWidth, double pxHeight)
     {
-        var angles = tokens
-            .Where(t => t.Text.Length >= 4)
+        var longRuns = tokens.Where(t => t.Text.Length >= 8).ToList();
+        var angles = (longRuns.Count >= 3 ? longRuns : tokens.Where(t => t.Text.Length >= 4))
             .Select(t => Math.Atan2(
                 (t.TopRightY - t.TopLeftY) * pxHeight,
                 (t.TopRightX - t.TopLeftX) * pxWidth))

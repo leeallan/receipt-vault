@@ -175,9 +175,8 @@
                                         BackgroundColor="{StaticResource AppSurfaceVariant}"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 12">
-                                    <Label Text="{Binding Category}"
-                                           FontSize="10"
-                                           TextColor="{StaticResource AppTextSecondary}"
+                                    <Label Text="{Binding CategoryIcon}"
+                                           FontSize="20"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"/>
                                 </Border>

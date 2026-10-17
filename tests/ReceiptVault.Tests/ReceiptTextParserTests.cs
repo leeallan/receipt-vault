@@ -33,6 +33,33 @@ public class ReceiptTextParserTests
         Assert.Equal("ASDA", result.Merchant);
     }
 
+    // Receipt tilted ~2.4° with the right side low, rendered for the promo videos
+    // (marketing/promo-videos/capture/receipts). Vision reports the short price runs as
+    // level boxes, which outnumber the descriptions; levelling by them left every price
+    // half a row below its description and no items were read.
+    [Fact]
+    public void Freshway_LevelsTiltFromLongRuns()
+    {
+        var result = Parse("freshway-tilted.json");
+
+        Assert.Equal(
+            """
+            SOURDOUGH LOAF 2.10
+            FREE RANGE EGGS 12 3.45
+            SEMI SKIMMED MILK 4PT 1.65
+            MATURE CHEDDAR 400G 3.75 (-0.75)
+            BANANAS LOOSE 0.98
+            OLIVE OIL 500ML 5.20
+            GREEK YOGURT 500G 2.40
+            COFFEE BEANS 1KG 11.50 (-1.50)
+            CHERRY TOMATOES 1.85
+            PASTA FUSILLI 1KG 1.60
+            """.ReplaceLineEndings("\n"),
+            Describe(result));
+        Assert.Equal(32.23m, result.Total);
+        Assert.Equal("FRESHWAY", result.Merchant);
+    }
+
     // Two-line items: the description, then "code qty @ £unit  total" beneath it.
     [Fact]
     public void Wickes_JoinsTwoLineItems()

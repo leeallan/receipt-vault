@@ -10,3 +10,6 @@ To add a fixture from a receipt photo (macOS, runs the same Vision request as th
 
 Photos taken in the app can be pulled off a connected phone with
 `xcrun devicectl device copy from --domain-type appDataContainer --domain-identifier com.farabove.receiptvault --source Library/receipt_images/<file>.jpg ...`.
+
+`freshway-tilted.json` is the exception: its photo was generated for the promo videos
+(`marketing/promo-videos/capture/receipts/make_receipts.py`), not taken on a phone.

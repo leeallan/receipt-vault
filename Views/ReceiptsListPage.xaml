@@ -53,11 +53,13 @@
                     Stroke="{StaticResource AppBorder}"
                     StrokeShape="RoundRectangle 14"
                     Padding="4,0">
-                <SearchBar Text="{Binding SearchQuery}"
+                <SearchBar x:Name="SearchInput"
+                           Text="{Binding SearchQuery}"
+                           SearchButtonPressed="OnSearchButtonPressed"
                            Placeholder="Search receipts…"
                            PlaceholderColor="{StaticResource AppTextMuted}"
                            TextColor="{StaticResource AppTextPrimary}"
-                           BackgroundColor="Transparent"
+                           BackgroundColor="{StaticResource AppSurface}"
                            CancelButtonColor="{StaticResource AppTextSecondary}"/>
             </Border>
 
@@ -257,12 +259,10 @@
                                         BackgroundColor="{StaticResource AppSurfaceVariant}"
                                         StrokeThickness="0"
                                         StrokeShape="RoundRectangle 12">
-                                    <Label Text="{Binding Category}"
-                                           FontSize="9"
-                                           TextColor="{StaticResource AppTextSecondary}"
+                                    <Label Text="{Binding CategoryIcon}"
+                                           FontSize="20"
                                            HorizontalOptions="Center"
-                                           VerticalOptions="Center"
-                                           LineBreakMode="TailTruncation"/>
+                                           VerticalOptions="Center"/>
                                 </Border>
                                 <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                                     <Label Text="{Binding Merchant}"
