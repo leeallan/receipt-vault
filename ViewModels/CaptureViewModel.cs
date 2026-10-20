@@ -22,6 +22,13 @@ public partial class CaptureViewModel(
     [ObservableProperty] private string? notes;
     [ObservableProperty] private bool isProcessingOcr;
     [ObservableProperty] private bool hasImage;
+    // Fields were filled in from the photo, so remind the user to check them.
+    [ObservableProperty] private bool wasScanned;
+
+    public string CurrencySymbol => CurrencyFormat.Symbol;
+    public string MerchantPlaceholder => CurrencyFormat.Code == "USD"
+        ? "e.g. Walmart, Starbucks"
+        : "e.g. Tesco, Costa Coffee";
 
     // Kept with the saved receipt so mis-reads can be diagnosed later.
     private string? rawOcrText;
@@ -75,17 +82,42 @@ public partial class CaptureViewModel(
             return;
         }
 
-        var photo = await MediaPicker.Default.CapturePhotoAsync();
+        FileResult? photo;
+        try
+        {
+            photo = await MediaPicker.Default.CapturePhotoAsync();
+        }
+        catch (PermissionException)
+        {
+            // Denied camera/storage access throws rather than returning null; an
+            // unhandled throw from a relay command takes the whole app down.
+            await ShowPermissionAlertAsync("camera");
+            return;
+        }
         await ProcessPhotoAsync(photo);
     }
 
     [RelayCommand]
     private async Task PickPhotoAsync()
     {
-        var photos = await MediaPicker.Default.PickPhotosAsync();
-        var photo = photos?.FirstOrDefault();
-        await ProcessPhotoAsync(photo);
+        IEnumerable<FileResult>? photos;
+        try
+        {
+            photos = await MediaPicker.Default.PickPhotosAsync();
+        }
+        catch (PermissionException)
+        {
+            await ShowPermissionAlertAsync("photos");
+            return;
+        }
+        await ProcessPhotoAsync(photos?.FirstOrDefault());
     }
+
+    private static Task ShowPermissionAlertAsync(string what) =>
+        Shell.Current.DisplayAlertAsync(
+            "Permission needed",
+            $"Receipt Vault needs access to your {what} to add a receipt. You can allow it in Settings.",
+            "OK");
 
     private async Task ProcessPhotoAsync(FileResult? photo)
     {
@@ -132,6 +164,7 @@ public partial class CaptureViewModel(
 
         if (result.Success)
         {
+            WasScanned = true;
             Merchant = result.Merchant;
             rawOcrText = result.RawText;
             TotalText = result.Total?.ToString("F2") ?? string.Empty;
@@ -222,6 +255,7 @@ public partial class CaptureViewModel(
         {
             Merchant = Merchant,
             Total = total,
+            Currency = CurrencyFormat.Code,
             Date = Date,
             Category = SelectedCategory,
             IsBusinessExpense = IsBusinessExpense,
@@ -253,6 +287,7 @@ public partial class CaptureViewModel(
     {
         CapturedImagePath = null;
         HasImage = false;
+        WasScanned = false;
         rawOcrText = null;
         Merchant = string.Empty;
         TotalText = string.Empty;

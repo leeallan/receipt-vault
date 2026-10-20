@@ -42,13 +42,7 @@ public class Receipt
     public string FormattedTotal => $"{CurrencySymbol}{Total:F2}";
 
     [Ignore]
-    public string CurrencySymbol => Currency switch
-    {
-        "GBP" => "£",
-        "USD" => "$",
-        "EUR" => "€",
-        _ => Currency + " "
-    };
+    public string CurrencySymbol => Services.CurrencyFormat.SymbolFor(Currency);
 
     [Ignore]
     public string[] TagList => string.IsNullOrWhiteSpace(Tags)

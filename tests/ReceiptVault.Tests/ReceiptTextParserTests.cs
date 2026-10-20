@@ -60,6 +60,29 @@ public class ReceiptTextParserTests
         Assert.Equal("FRESHWAY", result.Merchant);
     }
 
+    // A US address starts with a house number, which reads like a product code.
+    [Fact]
+    public void Freshway_IgnoresUsStreetAddress()
+    {
+        var plain = Parse("freshway-tilted.json");
+        var result = Parse("freshway-tilted.json", t => t == "12 High Street, Riverside" ? "1420 Canal St, Riverside" : t);
+
+        Assert.Equal(Describe(plain), Describe(result));
+    }
+
+    // US receipts print the month first. 10/15 can only be month-first, so it's read that
+    // way whatever the preference; 10/05 is ambiguous and follows it.
+    [Theory]
+    [InlineData("10/15/2026", false, 10, 15)]
+    [InlineData("10/05/2026", true, 10, 5)]
+    [InlineData("10/05/2026", false, 5, 10)]
+    public void Freshway_ReadsDayOrMonthFirstDates(string printed, bool monthFirst, int month, int day)
+    {
+        var result = Parse("freshway-tilted.json", t => t == "15/10/2026" ? printed : t, monthFirst);
+
+        Assert.Equal(new DateTime(2026, month, day), result.Date);
+    }
+
     // Two-line items: the description, then "code qty @ £unit  total" beneath it.
     [Fact]
     public void Wickes_JoinsTwoLineItems()
@@ -164,6 +187,35 @@ public class ReceiptTextParserTests
         Assert.Equal(119.00m, result.Total);
     }
 
+    // Android (ML Kit) capture of the same IKEA receipt, photographed with the left edge
+    // and logo cut off. ML Kit glues the VAT-code digit onto the price ("119.000"), and the
+    // only header left is "elcome to IKEA Warrington".
+    [Fact]
+    public void Ikea_MlKit_SplitsGluedTaxCodeAndDropsWelcome()
+    {
+        var result = Parse("ikea-mlkit-cropped.json");
+
+        Assert.Equal("MALM N chest/6 drw 1 119.00", Describe(result));
+        Assert.Equal(119.00m, result.Total);
+        Assert.Equal("IKEA Warrington", result.Merchant);
+    }
+
+    // The same receipt photographed sideways. ML Kit reads rotated text (Vision only reads
+    // upright text), so the runs arrive at 90° and must be turned upright before rows are
+    // stitched; otherwise whole columns merge into one "row".
+    [Fact]
+    public void Ikea_MlKit_ReadsSidewaysPhoto()
+    {
+        var result = Parse("ikea-mlkit-sideways.json");
+
+        Assert.StartsWith("MALM", Describe(result));
+        Assert.Single(result.Items);
+        Assert.Equal(119.00m, result.Items[0].Price);
+        Assert.Equal(119.00m, result.Total);
+        // ML Kit misses the logo here and reads "elcome to IKEA arrington".
+        Assert.Equal("IKEA arrington", result.Merchant);
+    }
+
     // "was ... NOW" prices with per-item savings, and "Total Saving Today" below the
     // amount paid that must not be taken as the total.
     [Fact]
@@ -185,7 +237,7 @@ public class ReceiptTextParserTests
 
     // rewrite lets a test simulate a different mis-read of the same photo; returning null
     // drops that text run entirely.
-    private static Models.OcrResult Parse(string fixture, Func<string, string?>? rewrite = null)
+    private static Models.OcrResult Parse(string fixture, Func<string, string?>? rewrite = null, bool monthFirst = false)
     {
         var json = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", fixture));
         var capture = JsonSerializer.Deserialize<Capture>(json,
@@ -196,7 +248,7 @@ public class ReceiptTextParserTests
                 .Select(t => rewrite(t.Text) is { } text ? t with { Text = text } : (OcrToken?)null)
                 .OfType<OcrToken>()
                 .ToList();
-        return ReceiptTextParser.Parse(tokens, capture.PixelWidth, capture.PixelHeight, documentCoverage: 1);
+        return ReceiptTextParser.Parse(tokens, capture.PixelWidth, capture.PixelHeight, documentCoverage: 1, monthFirst);
     }
 
     private sealed record Capture(double PixelWidth, double PixelHeight, List<OcrToken> Tokens);

@@ -49,6 +49,14 @@
 		                  Condition="$(TargetFramework.Contains('-android'))" />
 		<PackageReference Include="Plugin.InAppBilling" Version="10.0.0" />
 		<PackageReference Include="ClosedXML" Version="0.105.0" />
+		<!-- On-device text recognition for Android (bundled model, so it works offline on
+		     first launch without waiting for a Play Services model download). -->
+		<PackageReference Include="Xamarin.Google.MLKit.TextRecognition" Version="116.0.1.9"
+		                  Condition="$(TargetFramework.Contains('-android'))" />
+		<!-- ML Kit lifts androidx.fragment to 1.9, which absorbed fragment-ktx; MAUI still pins
+		     fragment-ktx 1.8.x, so both ship the same classes and D8 fails. Align them. -->
+		<PackageReference Include="Xamarin.AndroidX.Fragment.Ktx" Version="1.9.0"
+		                  Condition="$(TargetFramework.Contains('-android'))" />
 	</ItemGroup>
 
 	<ItemGroup>

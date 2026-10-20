@@ -188,7 +188,7 @@
                                PlaceholderColor="{StaticResource AppTextMuted}"/>
                     </Border>
 
-                    <Label Text="Total (£)" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
+                    <Label Text="{Binding Receipt.CurrencySymbol, StringFormat='Total ({0})'}" FontSize="13" TextColor="{StaticResource AppTextSecondary}"/>
                     <Border BackgroundColor="{StaticResource AppSurface}"
                             StrokeThickness="1" Stroke="{StaticResource AppBorder}"
                             StrokeShape="RoundRectangle 12" Padding="4,0">

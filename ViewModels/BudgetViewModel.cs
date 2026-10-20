@@ -44,7 +44,7 @@ public partial class BudgetViewModel(
         if (categoryResult is null or "Cancel") return;
 
         var limitInput = await Shell.Current.DisplayPromptAsync(
-            "Monthly limit", $"Budget for {categoryResult} (£):",
+            "Monthly limit", $"Budget for {categoryResult} ({CurrencyFormat.Symbol}):",
             keyboard: Keyboard.Numeric);
 
         if (!decimal.TryParse(limitInput, out var limit) || limit <= 0) return;

@@ -1,7 +1,9 @@
 appId: com.farabove.receiptvault
+env:
+  FRESHWAY_POINT: "17%,25%"
 ---
 # Store 3 — Premium: every item read off a receipt, then itemised spreadsheet and the
-# tax & expense report. State: reset.sh full premium. Freshway is the 1st library photo.
+# tax & expense report. State: reset.sh full premium [us]. record.sh passes Freshway's picker slot.
 - waitForAnimationToEnd
 - tapOn: ".*Scan Receipt"
 - waitForAnimationToEnd
@@ -15,7 +17,7 @@ appId: com.farabove.receiptvault
     commands:
       - tapOn: {point: "91%,18%"}
       - waitForAnimationToEnd
-- tapOn: {point: "17%,25%"}            # Freshway receipt
+- tapOn: {point: "${FRESHWAY_POINT}"}     # receipt photo (record.sh passes its slot)
 - extendedWaitUntil:
     visible: "FRESHWAY"
     timeout: 15000

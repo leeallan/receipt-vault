@@ -1,7 +1,9 @@
 appId: com.farabove.receiptvault
+env:
+  BRICKWELL_POINT: "50%,25%"
 ---
 # Store 1 — scan a receipt from the photo library, file it as a business expense, save.
-# State: reset.sh light. Brickwell is the 2nd photo in the library (capture/receipts).
+# State: reset.sh light [us]. record.sh passes the Brickwell photo's picker slot.
 - waitForAnimationToEnd
 - tapOn: ".*Scan Receipt"
 - waitForAnimationToEnd
@@ -15,7 +17,7 @@ appId: com.farabove.receiptvault
     commands:
       - tapOn: {point: "91%,18%"}
       - waitForAnimationToEnd
-- tapOn: {point: "50%,25%"}            # Brickwell receipt
+- tapOn: {point: "${BRICKWELL_POINT}"}     # receipt photo (record.sh passes its slot)
 - extendedWaitUntil:
     visible: "BRICKWELL"
     timeout: 15000

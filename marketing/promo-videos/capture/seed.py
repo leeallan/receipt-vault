@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Seed the Receipt Vault simulator database with fictional demo data for promo recordings.
 
-Usage: seed.py <app-data-container> <mode>
+Usage: seed.py <app-data-container> <mode> [uk|us]
   mode "light" - a handful of receipts this month; one is scanned on camera (Store 1).
   mode "full"  - a year of personal and business receipts, a few itemised, with budgets.
+  region "uk" (default) writes pounds with 20% VAT; "us" writes dollars with sales tax.
 
 The app must have been launched once (so the tables exist) and then terminated.
 Every shop, amount and item is made up.
@@ -65,7 +66,30 @@ BRICKWELL_ITEMS = [
 ]
 
 
-def main(container, mode):
+BRICKWELL_ITEMS_US = [
+    ("2X4X8 STUD", 18.84, 0), ("WOOD SCREWS #8 1LB", 9.97, 0), ("WOOD GLUE", 7.48, 0),
+    ("PAINTERS TAPE", 12.98, 0), ("CANVAS DROP CLOTH 9X12", 14.97, 0), ("SANDPAPER ASSORTED", 6.47, 0),
+]
+
+FRESHWAY_ITEMS_US = [
+    ("SOURDOUGH LOAF", 4.49, 0), ("LARGE EGGS 12CT", 3.99, 0), ("2% MILK 1 GAL", 3.79, 0),
+    ("SHARP CHEDDAR", 4.29, 1.00), ("BANANAS", 1.47, 0), ("OLIVE OIL", 8.99, 0),
+    ("GREEK YOGURT", 5.49, 0), ("COFFEE BEANS 2LB", 17.99, 2.00), ("CHERRY TOMATOES", 3.49, 0),
+    ("PENNE PASTA 1LB", 1.79, 0), ("AVOCADOS 2CT", 2.99, 0), ("ORANGE JUICE 52OZ", 4.29, 0),
+]
+
+# US: prices run higher in dollars, and it's gas, not fuel.
+US_SCALE = 1.25
+US_NAMES = {"Riverside Fuel": "Riverside Gas"}
+
+
+def main(container, mode, region="uk"):
+    us = region == "us"
+    currency = "USD" if us else "GBP"
+    freshway_items = FRESHWAY_ITEMS_US if us else FRESHWAY_ITEMS
+    brickwell_items = BRICKWELL_ITEMS_US if us else BRICKWELL_ITEMS
+    suffix = "_us" if us else ""
+
     db = sqlite3.connect(os.path.join(container, "Library", "receiptvault.db3"))
     for t in ("Receipts", "LineItems", "BudgetItems"):
         db.execute(f"DELETE FROM {t}")
@@ -79,6 +103,8 @@ def main(container, mode):
     rows = []  # (date, merchant, total, category, business, image, items)
 
     for days, merchant, total, cat, biz in RECENT:
+        if us:
+            merchant, total = US_NAMES.get(merchant, merchant), round(total * US_SCALE, 2)
         rows.append((TODAY - timedelta(days=days), merchant, total, cat, biz, None, None))
 
     if mode == "full":
@@ -89,39 +115,41 @@ def main(container, mode):
                 d += timedelta(days=max(1, int(rng.expovariate(per_month / 30.0))))
                 if d >= TODAY - timedelta(days=10):
                     break
-                total = round(rng.uniform(lo, hi), 2)
-                rows.append((d, merchant, total, cat, biz, None, None))
+                total = round(rng.uniform(lo, hi) * (US_SCALE if us else 1), 2)
+                rows.append((d, US_NAMES.get(merchant, merchant) if us else merchant, total, cat, biz, None, None))
 
         # Itemised receipts: a Freshway shop and a Brickwell trade run, both with photos.
-        fw = rng.sample(FRESHWAY_ITEMS, 10)
+        fw = rng.sample(freshway_items, 10)
         rows.append((TODAY - timedelta(days=9), "Freshway", round(sum(p - s for _, p, s in fw), 2),
-                     "Groceries", False, "freshway.jpg", fw))
-        rows.append((TODAY - timedelta(days=8), "Brickwell", round(sum(p for _, p, _ in BRICKWELL_ITEMS), 2),
-                     "Office", True, "brickwell.jpg", BRICKWELL_ITEMS))
+                     "Groceries", False, f"freshway{suffix}.jpg", fw))
+        bw_total = sum(p for _, p, _ in brickwell_items) * (1.0825 if us else 1)
+        rows.append((TODAY - timedelta(days=8), "Brickwell", round(bw_total, 2),
+                     "Office", True, f"brickwell{suffix}.jpg", brickwell_items))
 
         for cat, limit, biz in [("Groceries", 320, False), ("Dining", 60, False), ("Transport", 150, False),
                                 ("Travel", 200, True), ("Software", 40, True)]:
             db.execute("INSERT INTO BudgetItems (Category, MonthlyLimit, IsBusinessBudget) VALUES (?,?,?)",
-                       (cat, limit, int(biz)))
+                       (cat, round(limit * (US_SCALE if us else 1)), int(biz)))
 
     rows.sort(key=lambda r: r[0])
     for d, merchant, total, cat, biz, image, items in rows:
         stamp = datetime(d.year, d.month, d.day, rng.randint(8, 19), rng.randint(0, 59))
         if image:
             shutil.copy(os.path.join(HERE, "receipts", image), os.path.join(images, image))
-        # Business receipts carry 20% VAT (included in the total), as UK trade receipts do.
-        tax = round(total / 6, 2) if biz else None
+        # Business receipts carry tax: 20% VAT included in UK totals, 8.25% sales tax added
+        # on top in the US.
+        tax = (round(total - total / 1.0825, 2) if us else round(total / 6, 2)) if biz else None
         cur = db.execute(
             "INSERT INTO Receipts (Merchant, Total, Tax, Currency, Date, Category, IsBusinessExpense, ImagePath,"
             " CreatedAt, UpdatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)",
-            (merchant, total, tax, "GBP", ticks(d), cat, int(biz), image, ticks(stamp), ticks(stamp)))
+            (merchant, total, tax, currency, ticks(d), cat, int(biz), image, ticks(stamp), ticks(stamp)))
         for desc, price, saving in items or []:
             db.execute("INSERT INTO LineItems (ReceiptId, Description, Quantity, Price, Savings, Currency)"
-                       " VALUES (?,?,?,?,?,?)", (cur.lastrowid, desc, 1, price, saving, "GBP"))
+                       " VALUES (?,?,?,?,?,?)", (cur.lastrowid, desc, 1, price, saving, currency))
 
     db.commit()
-    print(f"seeded {len(rows)} receipts ({mode})")
+    print(f"seeded {len(rows)} receipts ({mode}, {region})")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    main(*sys.argv[1:4])

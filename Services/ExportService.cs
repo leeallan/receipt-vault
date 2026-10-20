@@ -155,6 +155,19 @@ public class ExportService : IExportService
 
     public async Task ShareFileAsync(string filePath)
     {
+#if ANDROID
+        // iOS's share sheet includes "Save to Files"; Android's has no save-to-device
+        // option, so offer the system save screen alongside sharing.
+        const string save = "Save to device", share = "Share…";
+        var choice = await Shell.Current.DisplayActionSheetAsync("Export", "Cancel", null, save, share);
+        if (choice == save)
+        {
+            if (await DocumentSaver.SaveAsync(filePath))
+                await CommunityToolkit.Maui.Alerts.Toast.Make($"Saved {Path.GetFileName(filePath)}").Show();
+            return;
+        }
+        if (choice != share) return;
+#endif
         await Share.Default.RequestAsync(new ShareFileRequest
         {
             Title = "Export Receipts",

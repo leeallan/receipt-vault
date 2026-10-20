@@ -14,15 +14,57 @@ public readonly record struct OcrToken(
 // types) so it can be unit-tested on any machine against captured OCR output.
 public static class ReceiptTextParser
 {
+    // monthFirst reads an ambiguous date such as 10/05/2026 the US way (5 October).
     public static OcrResult Parse(
-        IReadOnlyList<OcrToken> tokens, double pxWidth, double pxHeight, double documentCoverage)
+        IReadOnlyList<OcrToken> tokens, double pxWidth, double pxHeight, double documentCoverage,
+        bool monthFirst = false)
     {
+        (tokens, pxWidth, pxHeight) = TurnUpright(tokens, pxWidth, pxHeight);
         var lines = GroupIntoRows(tokens, MeasureSkew(tokens, pxWidth, pxHeight), pxWidth, pxHeight);
-        var result = ParseReceipt(lines);
+        var result = ParseReceipt(lines, monthFirst);
         if (FindLogo(tokens) is { } logo)
             result.Merchant = logo;
         result.Validation = ValidateReceipt(lines, tokens, documentCoverage);
         return result;
+    }
+
+    // ML Kit (Android) reads text at any angle, so a receipt photographed sideways or upside
+    // down arrives with its runs at ±90° or 180°; Vision only reads upright text. Turn such a
+    // capture upright by whole quarter turns (MeasureSkew levels any remaining tilt). The
+    // boxes are normalised with a bottom-left origin, so a run reading bottom-to-top is +90°.
+    private static (IReadOnlyList<OcrToken>, double, double) TurnUpright(
+        IReadOnlyList<OcrToken> tokens, double pxWidth, double pxHeight)
+    {
+        var turns = tokens
+            .Where(t => t.Text.Length >= 4)
+            .Select(t => Math.Atan2((t.TopRightY - t.TopLeftY) * pxHeight, (t.TopRightX - t.TopLeftX) * pxWidth))
+            .Select(a => ((int)Math.Round(a / (Math.PI / 2)) % 4 + 4) % 4)
+            .GroupBy(q => q)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault();
+        if (turns == 0) return (tokens, pxWidth, pxHeight);
+
+        // Maps a normalised point into the upright frame.
+        Func<double, double, (double U, double V)> map = turns switch
+        {
+            1 => (u, v) => (v, 1 - u),     // reads upwards: turn clockwise
+            3 => (u, v) => (1 - v, u),     // reads downwards: turn anticlockwise
+            _ => (u, v) => (1 - u, 1 - v), // upside down
+        };
+
+        var upright = tokens.Select(t =>
+        {
+            var a = map(t.X, t.Y);
+            var b = map(t.X + t.Width, t.Y + t.Height);
+            var tl = map(t.TopLeftX, t.TopLeftY);
+            var tr = map(t.TopRightX, t.TopRightY);
+            return new OcrToken(t.Text,
+                Math.Min(a.U, b.U), Math.Min(a.V, b.V), Math.Abs(a.U - b.U), Math.Abs(a.V - b.V),
+                tl.U, tl.V, tr.U, tr.V);
+        }).ToList();
+
+        return turns == 2 ? (upright, pxWidth, pxHeight) : (upright, pxHeight, pxWidth);
     }
 
     // Stores print their name as a big logo near the top, so the tallest text in the
@@ -213,7 +255,7 @@ public static class ReceiptTextParser
             @"(?<lead>(?:[£$€]|\bE)\d{1,4})\s*(?:[.,]\s*|\s+)(?<dec>\d{2})(?<tail>\s*(?:[A-Za-z*]|\s\d)?\s*)$",
             "${lead}.${dec}${tail}");
 
-    private static OcrResult ParseReceipt(List<string> lines)
+    private static OcrResult ParseReceipt(List<string> lines, bool monthFirst)
     {
         var result = new OcrResult { RawText = string.Join("\n", lines) };
         lines = lines.Select(RepairAmounts).ToList();
@@ -225,6 +267,8 @@ public static class ReceiptTextParser
                 && !Regex.IsMatch(l, @"^\d")
                 && !Regex.IsMatch(l, PromoKeywords, RegexOptions.IgnoreCase))
             ?? string.Empty;
+        // "Welcome to IKEA Warrington" — often with the "W" cut off at the photo's edge.
+        result.Merchant = Regex.Replace(result.Merchant, @"^w?elcome\s+to\s+(the\s+)?", "", RegexOptions.IgnoreCase);
 
         result.Total = FindTotal(lines);
 
@@ -259,17 +303,23 @@ public static class ReceiptTextParser
             }
         }
 
-        // Date: look for common date formats
+        // Date: look for common date formats. Read day-first or month-first as preferred,
+        // falling back to the other order when that can't be a date (US 10/15/2026).
+        string[] cultures = monthFirst ? ["en-US", "en-GB"] : ["en-GB", "en-US"];
         foreach (var line in lines)
         {
             var m = Regex.Match(line, @"\b(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})\b");
-            if (m.Success && DateTime.TryParse(m.Value,
-                System.Globalization.CultureInfo.GetCultureInfo("en-GB"),
-                System.Globalization.DateTimeStyles.None, out var date))
+            if (!m.Success) continue;
+            foreach (var culture in cultures)
             {
-                result.Date = date;
-                break;
+                if (DateTime.TryParse(m.Value, System.Globalization.CultureInfo.GetCultureInfo(culture),
+                    System.Globalization.DateTimeStyles.None, out var date))
+                {
+                    result.Date = date;
+                    break;
+                }
             }
+            if (result.Date is not null) break;
         }
 
         (result.Items, var deductions) = ParseLineItems(lines);
@@ -372,9 +422,18 @@ public static class ReceiptTextParser
         @"merchant|gbp|usd|eur|change due|debited|cardholder|retain)\b";
 
     // A line that starts with the payment method. Anchored to the start so items such as
-    // "BIRTHDAY CARD 2.50" don't match.
+    // "BIRTHDAY CARD 2.50" don't match. "MASTERCARD"'s last letter is often misread
+    // ("MASTERCARO").
     private const string PaymentLine =
-        @"^(mastercard|visa|amex|american express|maestro|card|cash|contactless|debit card|credit card)\b";
+        @"^(master\s?car[a-z0-9]|visa|amex|american express|maestro|card|cash|contactless|debit card|credit card)\b";
+
+    private const string StreetAddress =
+        @"\b(st|street|ave|avenue|rd|road|blvd|boulevard|dr|drive|ln|lane|hwy|highway|pkwy|parkway|" +
+        @"way|ct|court|pl|place|suite|ste)\b\.?(,|\s*$)";
+
+    // The end of a UK address line before a misread inward code: "United Kingdom, NW10 0JQ"
+    // read as "…, NW10 0.30" looks like a 30p item.
+    private const string PostcodeBeforeAmount = @",\s*[A-Z]{1,2}\d[A-Z\d]?$";
 
     // Lines that describe a discount / saving applied to the previous item or the basket.
     private const string SavingsKeywords =
@@ -454,10 +513,11 @@ public static class ReceiptTextParser
 
             // Trailing money amount, optionally negative / parenthesised, with an optional
             // trailing tax code: a letter or asterisk ("1.99 A", "2.50*") or, as IKEA prints,
-            // a separate digit ("119.00 0"). Vision often reads a faint "£" as "E" ("E2.87"),
-            // so accept that as a currency sign too.
+            // a separate digit ("119.00 0"), which ML Kit glues onto the price ("119.000").
+            // Vision often reads a faint "£" as "E" ("E2.87"), so accept that as a currency
+            // sign too.
             var m = Regex.Match(line,
-                @"^(?<desc>.*?)[\s]*(?<neg>[-(])?\s*(?:[£$€]|E(?=\d))?\s*(?<amt>\d{1,4}[.,]\d{2})\s*(?<neg2>[-)])?(?:\s*[A-Za-z*]|\s+\d)?\s*$");
+                @"^(?<desc>.*?)[\s]*(?<neg>[-(])?\s*(?:[£$€]|E(?=\d))?\s*(?<amt>\d{1,4}[.,]\d{2})\d?\s*(?<neg2>[-)])?(?:\s*[A-Za-z*]|\s+\d)?\s*$");
 
             decimal? amount = null;
             var desc = line;
@@ -511,6 +571,13 @@ public static class ReceiptTextParser
                 pendingDescription = desc;
                 continue;
             }
+
+            // A US store address starts with a house number that looks like a product code
+            // ("1420 Canal St, Riverside"), so a priceless row that reads like a street isn't one.
+            if (amount is null && Regex.IsMatch(desc, StreetAddress, RegexOptions.IgnoreCase))
+                continue;
+            if (Regex.IsMatch(desc, PostcodeBeforeAmount))
+                continue;
 
             items.Add(new LineItem
             {

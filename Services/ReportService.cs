@@ -8,7 +8,8 @@ public class ReportService(IPdfService pdf) : IReportService
     public Task<string?> BuildReceiptsPdfAsync(List<Receipt> receipts, string title, string subtitle, string fileName)
     {
         var ordered = receipts.OrderByDescending(r => r.Date).ToList();
-        var symbol = ordered.FirstOrDefault()?.CurrencySymbol ?? "£";
+        var symbol = ordered.FirstOrDefault()?.CurrencySymbol ?? CurrencyFormat.Symbol;
+        var taxName = CurrencyFormat.TaxName(ordered.FirstOrDefault()?.Currency);
 
         var rows = ordered
             .Select(r => (IReadOnlyList<string>)new[]
@@ -29,7 +30,7 @@ public class ReportService(IPdfService pdf) : IReportService
             Summary =
             {
                 ("Receipts", ordered.Count.ToString()),
-                ("Total tax / VAT", $"{symbol}{ordered.Sum(r => r.Tax ?? 0):F2}"),
+                ($"Total {taxName}", $"{symbol}{ordered.Sum(r => r.Tax ?? 0):F2}"),
                 ("Total spend", $"{symbol}{ordered.Sum(r => r.Total):F2}"),
             },
             Tables =
@@ -49,7 +50,8 @@ public class ReportService(IPdfService pdf) : IReportService
 
     public Task<string?> BuildTaxReportPdfAsync(List<Receipt> receipts, string periodLabel, string fileName)
     {
-        var symbol = receipts.FirstOrDefault()?.CurrencySymbol ?? "£";
+        var symbol = receipts.FirstOrDefault()?.CurrencySymbol ?? CurrencyFormat.Symbol;
+        var taxName = CurrencyFormat.TaxName(receipts.FirstOrDefault()?.Currency);
         var business = receipts.Where(r => r.IsBusinessExpense).OrderByDescending(r => r.Date).ToList();
         var personal = receipts.Where(r => !r.IsBusinessExpense).ToList();
 
@@ -68,7 +70,7 @@ public class ReportService(IPdfService pdf) : IReportService
                 ("Total receipts", receipts.Count.ToString()),
                 ("Business spend", $"{symbol}{business.Sum(r => r.Total):F2}"),
                 ("Personal spend", $"{symbol}{personal.Sum(r => r.Total):F2}"),
-                ("Total tax / VAT", $"{symbol}{receipts.Sum(r => r.Tax ?? 0):F2}"),
+                ($"Total {taxName}", $"{symbol}{receipts.Sum(r => r.Tax ?? 0):F2}"),
                 ("Total spend", $"{symbol}{receipts.Sum(r => r.Total):F2}"),
             },
             Tables =

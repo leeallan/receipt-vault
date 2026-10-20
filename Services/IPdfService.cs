@@ -1,7 +1,7 @@
 namespace ReceiptVault.Services;
 
 // Renders a platform-agnostic PdfReport into an actual PDF file. Implemented per
-// platform (iOS uses UIKit's PDF renderer); Android is a stub for now.
+// platform (iOS uses UIKit's PDF renderer, Android uses PdfDocument).
 public interface IPdfService
 {
     // True when this platform can produce PDFs.

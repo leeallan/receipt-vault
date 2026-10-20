@@ -1,10 +1,11 @@
 #!/bin/zsh
-# Render every composition to ../out. App Store previews get a silent stereo AAC track,
-# which App Store Connect expects on app previews.
+# Render every composition to ../out, or only those whose id matches a pattern
+# (./render.sh -US-). App Store previews get a silent stereo AAC track, which App Store
+# Connect expects on app previews.
 set -e
 cd ${0:A:h}
 mkdir -p ../out/store ../out/social
-for id in $(npx remotion compositions --quiet); do
+for id in $(npx remotion compositions --quiet | grep -E -- "${1:-.}"); do
   case $id in
     Store*) dir=store ;;
     *) dir=social ;;

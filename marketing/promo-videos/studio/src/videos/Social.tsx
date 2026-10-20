@@ -4,16 +4,19 @@ import { EndCard, FadeIn } from "../lib/components";
 import {
   ChatScene, ClipScene, CounterScene, DocumentScene, FadingReceiptScene, ListScene, NotificationPile, TitleScene,
 } from "../lib/scenes";
+import { footage, Region } from "../lib/region";
 
 // Short native-feeling cuts for TikTok / Reels / Shorts. Silent by design: post with a
 // trending sound added in-app. Each takes `hook` so the A/B/C variants share one edit.
 // All shops, people and amounts are fictional demo data.
 
-type HookProps = { hook: string };
+type HookProps = { hook: string; region?: Region };
 
 // public/tax-report.png is page 1 of the tax & expense report the app exported during the
 // social_tax recording (qlmanage -t -s 2400 on the PDF from the app's Caches/exports).
+// tax-report-us.png is the same page from the US recording.
 const REPORT_ASPECT = 2400 / 1695;
+const report = (region: Region) => (region === "us" ? "tax-report-us.png" : "tax-report.png");
 
 const End: React.FC<{ line?: string; sub?: string }> = (p) => <FadeIn><EndCard {...p} /></FadeIn>;
 
@@ -74,22 +77,38 @@ export const S2: React.FC<HookProps> = ({ hook }) => {
   );
 };
 
-/** S3 — things nobody tells you about keeping records when self-employed (GOV.UK). */
+/** S3 — things nobody tells you about keeping records when self-employed (GOV.UK / IRS). */
+const S3_RULES = {
+  uk: {
+    source: "Source: GOV.UK — “Business records if you’re self-employed”",
+    items: [
+      "Keep records *5 years* after the 31 Jan deadline",
+      "Paper or digital — *both count*",
+      "Unreadable records can mean *a penalty*",
+      "Split business from *personal*",
+    ],
+  },
+  us: {
+    source: "Source: IRS — “How long should I keep records?” and Publication 583",
+    items: [
+      "Keep records *3 years* — sometimes 6 or 7",
+      "Digital records count — *if they’re legible*",
+      "Paid cash? *Keep the receipt.*",
+      "A bank statement alone *isn’t enough*",
+    ],
+  },
+};
+const S3_LIST_TRIM = { uk: 15.0, us: 16.0 };
 export const S3_SECONDS = 14.4;
-export const S3: React.FC<HookProps> = ({ hook }) => {
+export const S3: React.FC<HookProps> = ({ hook, region = "uk" }) => {
   const { fps } = useVideoConfig();
   return (
     <Series>
       <Series.Sequence durationInFrames={8.6 * fps}>
-        <ListScene title={hook} every={1.8} source="Source: GOV.UK — “Business records if you’re self-employed”" items={[
-          "Keep records *5 years* after the 31 Jan deadline",
-          "Paper or digital — *both count*",
-          "Unreadable records can mean *a penalty*",
-          "Split business from *personal*",
-        ]} />
+        <ListScene title={hook} every={1.8} source={S3_RULES[region].source} items={S3_RULES[region].items} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={3.3 * fps}>
-        <ClipScene enter caption="Receipt Vault keeps *all of it*" src="footage/store2.mp4" trim={15.0} rate={1.5} />
+        <ClipScene enter caption="Receipt Vault keeps *all of it*" src={footage("store2", region)} trim={S3_LIST_TRIM[region]} rate={1.5} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={2.5 * fps}>
         <End />
@@ -149,24 +168,27 @@ export const S5: React.FC<HookProps> = ({ hook }) => {
   );
 };
 
-/** S6 — Self Assessment season (post late December to mid January). */
+/** S6 — tax season: UK Self Assessment (post late Dec – mid Jan) or US Tax Day (Feb – early Apr). */
+const T6 = { uk: { export: 35.8, list: 25.0 }, us: { export: 35.5, list: 25.0 } };
 export const S6_SECONDS = 14.2;
-export const S6: React.FC<HookProps> = ({ hook }) => {
+export const S6: React.FC<HookProps> = ({ hook, region = "uk" }) => {
   const { fps } = useVideoConfig();
+  const t = T6[region];
   return (
     <Series>
       <Series.Sequence durationInFrames={2.5 * fps}>
         <TitleScene text={hook} size={100} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={2.8 * fps}>
-        <ClipScene enter caption="Pick your dates. *Tap export.*" src="footage/store3.mp4" trim={35.8} rate={1.5} />
+        <ClipScene enter caption="Pick your dates. *Tap export.*" src={footage("store3", region)} trim={t.export} rate={1.5} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={3.4 * fps}>
-        <DocumentScene caption="Business spend, VAT, categories — *done*" size={74} src="tax-report.png"
+        <DocumentScene size={74} src={report(region)}
+          caption={region === "us" ? "Business spend, sales tax, categories — *done*" : "Business spend, VAT, categories — *done*"}
           aspect={REPORT_ASPECT} from={0} to={0.2} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={2.8 * fps}>
-        <ClipScene caption="Every business expense, *listed*" src="footage/social_tax.mp4" trim={25.0} rate={1.3} />
+        <ClipScene caption="Every business expense, *listed*" src={footage("social_tax", region)} trim={t.list} rate={1.3} />
       </Series.Sequence>
       <Series.Sequence durationInFrames={2.7 * fps}>
         <End line="Tax & expense reports with Premium." />

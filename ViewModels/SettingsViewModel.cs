@@ -32,14 +32,14 @@ public partial class SettingsViewModel(
     public async Task LoadAsync()
     {
         IsPremium = subscriptionService.IsPremium;
-        SelectedCurrency = Preferences.Default.Get("default_currency", "GBP");
+        SelectedCurrency = Preferences.Default.Get(CurrencyFormat.PreferenceKey, "GBP");
         var all = await receiptService.GetAllAsync();
         ReceiptCount = all.Count;
         OnPropertyChanged(nameof(SubscriptionLabel));
     }
 
     partial void OnSelectedCurrencyChanged(string value) =>
-        Preferences.Default.Set("default_currency", value);
+        Preferences.Default.Set(CurrencyFormat.PreferenceKey, value);
 
     // Opens the Export screen (date-range + itemised filters, spreadsheet/PDF/tax report).
     [RelayCommand]

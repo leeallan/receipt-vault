@@ -48,7 +48,8 @@ public class OcrService : IOcrService
                 .DefaultIfEmpty(0)
                 .Max() ?? 0;
 
-            var result = ReceiptTextParser.Parse(tokens, image.CGImage.Width, image.CGImage.Height, documentCoverage);
+            var result = ReceiptTextParser.Parse(tokens, image.CGImage.Width, image.CGImage.Height, documentCoverage,
+                monthFirst: CurrencyFormat.Code == "USD");
             return result;
         });
     }

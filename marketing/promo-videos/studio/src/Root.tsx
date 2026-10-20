@@ -2,6 +2,7 @@ import React from "react";
 import { Composition, Folder } from "remotion";
 import { Store1, Store2, Store3, STORE1_SECONDS, STORE2_SECONDS, STORE3_SECONDS } from "./videos/Store";
 import { S1, S2, S3, S4, S5, S6, S1_SECONDS, S2_SECONDS, S3_SECONDS, S4_SECONDS, S5_SECONDS, S6_SECONDS } from "./videos/Social";
+import { Region } from "./lib/region";
 
 const FPS = 30;
 const f = (s: number) => Math.round(s * FPS);
@@ -20,7 +21,9 @@ const SIZES = [
   { suffix: "Landscape", width: 1920, height: 1080 },
 ];
 
-const SOCIAL: { name: string; component: React.FC<{ hook: string }>; seconds: number; hooks: string[] }[] = [
+const SOCIAL: {
+  name: string; component: React.FC<{ hook: string; region?: Region }>; seconds: number; hooks: string[]; region?: Region;
+}[] = [
   { name: "S1-POV", component: S1, seconds: S1_SECONDS, hooks: [
     "POV: your boss wants *the receipt* from March",
     "Me pretending I *kept the receipt*",
@@ -51,24 +54,41 @@ const SOCIAL: { name: string; component: React.FC<{ hook: string }>; seconds: nu
     "Self-employed? *Do this before January*",
     "Sort your tax-return receipts *in minutes*",
   ] },
+  // US versions of the two region-specific clips (IRS rules; Tax Day). The others travel.
+  { name: "S3-Nobody-US", component: S3, seconds: S3_SECONDS, region: "us", hooks: [
+    "Things nobody tells you when you go *self-employed*",
+    "The IRS can ask for receipts from *years ago*",
+    "Your accountant *wishes you knew this*",
+  ] },
+  { name: "S6-TaxSeason-US", component: S6, seconds: S6_SECONDS, region: "us", hooks: [
+    "Tax Day is *April\u00A015.* Ready?",
+    "Self-employed? *Do this before April*",
+    "Sort your tax receipts *in minutes*",
+  ] },
 ];
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      <Folder name="Store">
-        {STORE.flatMap((v) =>
-          SIZES.map((s) => (
-            <Composition key={`${v.name}-${s.suffix}`} id={`${v.name}-${s.suffix}`} component={v.component}
-              durationInFrames={f(v.seconds)} fps={FPS} width={s.width} height={s.height} />
-          )),
-        )}
-      </Folder>
+      {(["uk", "us"] as const).map((region) => (
+        <Folder key={region} name={region === "uk" ? "Store" : "Store-US"}>
+          {STORE.flatMap((v) =>
+            SIZES.map((s) => {
+              const id = `${v.name}${region === "us" ? "-US" : ""}-${s.suffix}`;
+              return (
+                <Composition key={id} id={id} component={v.component} defaultProps={{ region }}
+                  durationInFrames={f(v.seconds)} fps={FPS} width={s.width} height={s.height} />
+              );
+            }),
+          )}
+        </Folder>
+      ))}
       <Folder name="Social">
         {SOCIAL.flatMap((v) =>
           v.hooks.map((hook, i) => (
             <Composition key={`${v.name}-${"ABC"[i]}`} id={`${v.name}-${"ABC"[i]}`} component={v.component}
-              durationInFrames={f(v.seconds)} fps={FPS} width={1080} height={1920} defaultProps={{ hook }} />
+              durationInFrames={f(v.seconds)} fps={FPS} width={1080} height={1920}
+              defaultProps={{ hook, region: v.region ?? "uk" }} />
           )),
         )}
       </Folder>

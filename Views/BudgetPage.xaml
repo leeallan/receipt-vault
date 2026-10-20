@@ -5,8 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:ReceiptVault.ViewModels"
     xmlns:models="clr-namespace:ReceiptVault.Models"
+    xmlns:conv="clr-namespace:ReceiptVault.Converters"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{StaticResource AppBackground}">
+
+    <ContentPage.Resources>
+        <conv:CurrencyConverter x:Key="CurrencyConverter"/>
+    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,Auto,*">
 
@@ -46,14 +51,14 @@
                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                 <Label Text="Spent"
                                        FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
-                                <Label Text="{Binding TotalSpent, StringFormat='£{0:F2}'}"
+                                <Label Text="{Binding TotalSpent, Converter={StaticResource CurrencyConverter}}"
                                        FontSize="22" FontAttributes="Bold"
                                        TextColor="{StaticResource AppTextPrimary}"/>
                             </VerticalStackLayout>
                             <VerticalStackLayout Grid.Column="1" Spacing="2">
                                 <Label Text="Budget"
                                        FontSize="12" TextColor="{StaticResource AppTextSecondary}"/>
-                                <Label Text="{Binding TotalBudget, StringFormat='£{0:F2}'}"
+                                <Label Text="{Binding TotalBudget, Converter={StaticResource CurrencyConverter}}"
                                        FontSize="22" FontAttributes="Bold"
                                        TextColor="{StaticResource AppTextPrimary}"/>
                             </VerticalStackLayout>
@@ -103,7 +108,7 @@
                                                    FontSize="15" FontAttributes="Bold"
                                                    TextColor="{StaticResource AppTextPrimary}"/>
                                             <Label Grid.Column="1"
-                                                   Text="{Binding SpentAmount, StringFormat='£{0:F2}'}"
+                                                   Text="{Binding SpentAmount, Converter={StaticResource CurrencyConverter}}"
                                                    FontSize="15" FontAttributes="Bold"
                                                    TextColor="{StaticResource AppTextPrimary}"/>
                                         </Grid>
@@ -117,7 +122,7 @@
                                                    FontSize="12"
                                                    TextColor="{StaticResource AppTextSecondary}"/>
                                             <Label Grid.Column="1"
-                                                   Text="{Binding MonthlyLimit, StringFormat='of £{0:F2}'}"
+                                                   Text="{Binding MonthlyLimit, Converter={StaticResource CurrencyConverter}, ConverterParameter='of '}"
                                                    FontSize="12"
                                                    TextColor="{StaticResource AppTextSecondary}"/>
                                         </Grid>

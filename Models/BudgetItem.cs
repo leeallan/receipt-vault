@@ -25,6 +25,6 @@ public class BudgetItem
 
     [Ignore]
     public string Remaining => MonthlyLimit > 0
-        ? $"£{Math.Max(MonthlyLimit - SpentAmount, 0):F2} left"
+        ? $"{Services.CurrencyFormat.Format(Math.Max(MonthlyLimit - SpentAmount, 0))} left"
         : "No limit";
 }
